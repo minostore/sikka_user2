@@ -9,6 +9,7 @@ import '../services/ride_service.dart';
 import '../widgets/common.dart';
 import 'notifications_screen.dart';
 import 'support_tickets_screen.dart';
+import 'blocked_users_screen.dart';
 import 'place_search_screen.dart';
 import 'splash_gate.dart';
 
@@ -71,6 +72,7 @@ class AccountScreen extends StatelessWidget {
             item(Icons.work, 'عنوان العمل', () => _setPlace(context, uid, 'work'), sub: asMap(places['work'])['address']?.toString()),
             item(Icons.notifications_none, 'الإشعارات', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
             item(Icons.support_agent, 'المساعدة والدعم', () => _support(context)),
+            item(Icons.block, 'قائمة الحظر', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen(role: 'rider')))),
             item(Icons.description_outlined, 'الشروط والخصوصية', () => showDialog(context: context, builder: (ctx) => AlertDialog(title: const Text('الشروط والخصوصية'), content: const Text('باستخدامك مشوار فأنت توافق على: تقديم بيانات صحيحة، الالتزام بالسعر المتفق عليه مع السائق، احترام السائقين والركاب، وعدم إساءة استخدام التطبيق. نستخدم موقعك أثناء استخدام التطبيق فقط لتحديد الالتقاط وتتبع الرحلة، ولا نشاركه مع أي جهة خارج الرحلة. يمكنك طلب حذف بياناتك عبر الدعم.'), actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إغلاق'))]))),
             ListTile(
               leading: const Icon(Icons.logout, color: AppColors.red),

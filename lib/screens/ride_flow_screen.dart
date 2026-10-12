@@ -14,6 +14,8 @@ import '../widgets/app_map.dart';
 import '../widgets/common.dart';
 import '../widgets/map_utils.dart';
 import '../widgets/markers.dart';
+import 'ride_chat_screen.dart';
+import 'ticket_chat_screen.dart';
 
 /// يتابع حالة الرحلة لحظياً ويعرض: العروض ← التتبع ← التقييم
 class RideFlowScreen extends StatelessWidget {
@@ -62,6 +64,23 @@ class _OffersView extends StatefulWidget {
 class _OffersViewState extends State<_OffersView> {
   String _sort = 'price';
   bool _busy = false;
+  int _serverOffsetMs = 0;
+  StreamSubscription<DatabaseEvent>? _offsetSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _offsetSub = RideService.db.child('.info/serverTimeOffset').onValue.listen((event) {
+      final value = event.snapshot.value;
+      if (value is num && mounted) setState(() => _serverOffsetMs = value.toInt());
+    });
+  }
+
+  @override
+  void dispose() {
+    _offsetSub?.cancel();
+    super.dispose();
+  }
 
   Future<void> _cancel() async {
     if (!await confirmDialog(context, 'إلغاء الطلب', 'هل تريد إلغاء طلب الرحلة؟',
@@ -136,8 +155,9 @@ class _OffersViewState extends State<_OffersView> {
                   return a.price.compareTo(b.price);
               }
             });
+            final serverNow = DateTime.now().millisecondsSinceEpoch + _serverOffsetMs;
             final expired = r.createdAt != null &&
-                DateTime.now().millisecondsSinceEpoch - r.createdAt! > 10 * 60 * 1000;
+                serverNow - r.createdAt! > const Duration(seconds: 60).inMilliseconds;
             if (offers.isEmpty) {
               return Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -156,12 +176,15 @@ class _OffersViewState extends State<_OffersView> {
                   child: InfoCard(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
-                        const CircleAvatar(child: Icon(Icons.person)),
+                        CircleAvatar(
+                          backgroundImage: o.photoUrl.startsWith('http') ? NetworkImage(o.photoUrl) : null,
+                          child: o.photoUrl.startsWith('http') ? null : const Icon(Icons.person),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text(o.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text('★ ${o.rating.toStringAsFixed(1)} • ${o.trips} رحلة',
+                            Text('★ ${o.rating.toStringAsFixed(1)} • ${o.trips} مشوار',
                                 style: const TextStyle(fontSize: 12, color: Colors.grey)),
                           ]),
                         ),
@@ -284,8 +307,8 @@ class _TrackingViewState extends State<_TrackingView> {
     );
     if (ok == true && ctrl.text.trim().isNotEmpty) {
       try {
-        await RideService.createTicket('بلاغ عن رحلة', ctrl.text.trim(), rideId: r.id);
-        if (mounted) showSnack(context, 'تم إرسال البلاغ للدعم');
+        final ticketId = await RideService.createTicket('بلاغ عن رحلة', ctrl.text.trim(), rideId: r.id);
+        if (mounted) await Navigator.push(context, MaterialPageRoute(builder: (_) => TicketChatScreen(ticketId: ticketId, role: 'user')));
       } catch (_) {
         if (mounted) showSnack(context, 'تعذر إرسال البلاغ', error: true);
       }
@@ -383,6 +406,11 @@ class _TrackingViewState extends State<_TrackingView> {
               const SizedBox(width: 8),
               Expanded(child: OutlinedButton.icon(onPressed: _report, icon: const Icon(Icons.report_problem_outlined), label: const Text('بلاغ'))),
             ]),
+            if (r.status == 'started')
+              SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RideChatScreen(rideId: r.id))),
+                icon: const Icon(Icons.chat_bubble_outline), label: const Text('محادثة مع السائق'),
+              )),
             if (r.status == 'accepted' || r.status == 'arrived')
               TextButton(
                 onPressed: _cancel,

@@ -11,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 class Offer {
   final String driverId;
   final String name;
+  final String photoUrl;
   final String phone;
   final double rating;
   final int trips;
@@ -19,12 +20,13 @@ class Offer {
   final int etaMin;
   final String note;
   final int createdAt;
-  Offer(this.driverId, this.name, this.phone, this.rating, this.trips, this.vehicle,
+  Offer(this.driverId, this.name, this.photoUrl, this.phone, this.rating, this.trips, this.vehicle,
       this.price, this.etaMin, this.note, this.createdAt);
 
   factory Offer.fromMap(String id, Map<String, dynamic> m) => Offer(
         id,
         (m['name'] ?? 'سائق').toString(),
+        (m['photoUrl'] ?? '').toString(),
         (m['phone'] ?? '').toString(),
         numD(m['rating']),
         (m['trips'] as num?)?.toInt() ?? 0,
@@ -128,7 +130,6 @@ class RideService {
       'openRequests/$id': {
         ...base,
         'createdAt': ServerValue.timestamp,
-        'expiresAt': DateTime.now().millisecondsSinceEpoch + 60 * 1000,
       },
       'userRides/$uid/$id': true,
       'users/$uid/activeRide': id,
@@ -138,6 +139,11 @@ class RideService {
   }
 
   static Future<void> acceptOffer(String rideId, Offer o) async {
+    final rideBefore = asMap((await db.child('rides/$rideId').get()).value);
+    final riderId = (rideBefore['riderId'] ?? '').toString();
+    final blockedByRider = (await db.child('blocks/$riderId/${o.driverId}').get()).exists;
+    final blockedByDriver = (await db.child('blocks/${o.driverId}/$riderId').get()).exists;
+    if (blockedByRider || blockedByDriver) throw Exception('لا يمكن قبول العرض بسبب إعدادات الحظر بين الحسابين.');
     // Claim the ride with a transaction so two offers cannot win simultaneously.
     final code = (1000 + Random().nextInt(9000)).toString();
     final rideRef = db.child('rides/$rideId');
@@ -229,11 +235,13 @@ class RideService {
     return list;
   }
 
-  static Future<void> createTicket(String title, String message, {String? rideId}) async {
+  static Future<String> createTicket(String title, String message, {String? rideId}) async {
     final id = db.child('tickets').push().key!;
     await db.update({
       'tickets/$id': {
         'uid': uid,
+        'role': 'user',
+        'ticketNumber': id.substring(id.length - 8).toUpperCase(),
         'title': title,
         'rideId': rideId ?? '',
         'status': 'open',
@@ -245,5 +253,6 @@ class RideService {
       },
       'userTickets/$uid/$id': true,
     });
+    return id;
   }
 }

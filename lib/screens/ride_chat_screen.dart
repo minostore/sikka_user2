@@ -19,6 +19,8 @@ class _RideChatScreenState extends State<RideChatScreen> {
   String? _error;
   String _myName = 'أنا';
   String _otherName = 'الطرف الآخر';
+  String? _otherId;
+  String _otherRole = 'user';
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   @override
@@ -41,9 +43,28 @@ class _RideChatScreenState extends State<RideChatScreen> {
       if (mounted) setState(() {
         _myName = (isRider ? ride['riderName'] : ride['driverName'])?.toString() ?? 'أنا';
         _otherName = (isRider ? ride['driverName'] : ride['riderName'])?.toString() ?? 'الطرف الآخر';
+        _otherId = isRider ? driverId : riderId;
+        _otherRole = isRider ? 'driver' : 'user';
       });
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _blockOther() async {
+    final uid = _uid, otherId = _otherId;
+    if (uid == null || otherId == null || otherId.isEmpty) return;
+    final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('حظر الحساب'),
+      content: Text('هل تريد حظر $_otherName؟ لن تتمكن من مراسلته أو استقبال عروض منه.'),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')), FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حظر'))],
+    ));
+    if (ok != true) return;
+    try {
+      await _db.child('blocks/$uid/$otherId').set({'name': _otherName, 'role': _otherRole, 'blockedAt': ServerValue.timestamp});
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم حظر الحساب'))); Navigator.pop(context); }
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر حظر الحساب')));
     }
   }
 
@@ -57,6 +78,10 @@ class _RideChatScreenState extends State<RideChatScreen> {
     }
     setState(() => _sending = true);
     try {
+      final otherId = _otherId;
+      if (otherId == null || (await _db.child('blocks/$uid/$otherId').get()).exists || (await _db.child('blocks/$otherId/$uid').get()).exists) {
+        throw Exception('المحادثة غير متاحة بسبب إعدادات الحظر.');
+      }
       final rideSnap = await _db.child('rides/${widget.rideId}').get();
       if (!rideSnap.exists || rideSnap.value is! Map) throw Exception('الرحلة غير موجودة.');
       final ride = Map<String, dynamic>.from(rideSnap.value as Map);
@@ -68,7 +93,7 @@ class _RideChatScreenState extends State<RideChatScreen> {
         'senderName': _myName,
         'text': text,
         'createdAt': ServerValue.timestamp,
-        'status': 'sent',
+        'status': 'delivered',
         'readBy': {},
       });
       _input.clear();
@@ -98,7 +123,9 @@ class _RideChatScreenState extends State<RideChatScreen> {
   Widget build(BuildContext context) {
     final uid = _uid;
     return Scaffold(
-      appBar: AppBar(title: Text('محادثة مع $_otherName'), centerTitle: true),
+      appBar: AppBar(title: Text('محادثة مع $_otherName'), centerTitle: true, actions: [
+        IconButton(tooltip: 'حظر الطرف الآخر', icon: const Icon(Icons.person_off_outlined), onPressed: _blockOther),
+      ]),
       body: _error != null
           ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!, textAlign: TextAlign.center)))
           : Column(children: [
@@ -131,7 +158,7 @@ class _RideChatScreenState extends State<RideChatScreen> {
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             if (!mine) Text((m['senderName'] ?? _otherName).toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1769AA))),
                             Text((m['text'] ?? '').toString(), style: const TextStyle(fontSize: 15)),
-                            Align(alignment: AlignmentDirectional.centerEnd, child: Row(mainAxisSize: MainAxisSize.min, children: [Text(_time(m['createdAt']), style: TextStyle(fontSize: 10, color: Colors.grey.shade700)), if (mine) ...[const SizedBox(width: 4), Icon((m['readBy'] is Map && (m['readBy'] as Map).isNotEmpty) ? Icons.done_all : Icons.done, size: 15, color: (m['readBy'] is Map && (m['readBy'] as Map).isNotEmpty) ? Colors.blue : Colors.grey)]])),
+                            Align(alignment: AlignmentDirectional.centerEnd, child: Row(mainAxisSize: MainAxisSize.min, children: [Text(_time(m['createdAt']), style: TextStyle(fontSize: 10, color: Colors.grey.shade700)), if (mine) ...[const SizedBox(width: 4), Icon(Icons.done_all, size: 15, color: (m['readBy'] is Map && _otherId != null && (m['readBy'] as Map)[_otherId] == true) ? Colors.blue : Colors.grey)]])),
                           ]),
                         ),
                       );

@@ -12,6 +12,7 @@ import '../services/location_service.dart';
 import '../widgets/app_map.dart';
 import '../widgets/common.dart';
 import '../widgets/markers.dart';
+import '../widgets/app_update_banner.dart';
 import 'notifications_screen.dart';
 import 'account_screen.dart';
 import 'ride_flow_screen.dart';
@@ -109,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onRecenter: () => _locate(move: true),
         ),
       ),
+      Positioned(top: 82, left: 12, right: 12, child: SafeArea(child: AppUpdateBanner(role: 'rider'))),
       SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
