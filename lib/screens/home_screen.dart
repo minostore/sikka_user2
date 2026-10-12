@@ -13,7 +13,6 @@ import '../widgets/app_map.dart';
 import '../widgets/common.dart';
 import '../widgets/markers.dart';
 import 'notifications_screen.dart';
-import 'support_tickets_screen.dart';
 import 'account_screen.dart';
 import 'ride_flow_screen.dart';
 import 'select_route_screen.dart';
@@ -119,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                   child: Text('مرحباً${_name.isEmpty ? '' : '، $_name'}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-              IconButton(tooltip: 'خدمة العملاء', icon: const Icon(Icons.support_agent), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportTicketsScreen(role: 'user')))),
+              IconButton(tooltip: 'خدمة العملاء', icon: const Icon(Icons.support_agent), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen()))),
               IconButton(tooltip: 'الإشعارات', icon: const Icon(Icons.notifications_none), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
             ]),
           ),

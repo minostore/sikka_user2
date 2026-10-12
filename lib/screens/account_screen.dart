@@ -8,6 +8,7 @@ import '../services/auth_service.dart';
 import '../services/ride_service.dart';
 import '../widgets/common.dart';
 import 'notifications_screen.dart';
+import 'support_tickets_screen.dart';
 import 'place_search_screen.dart';
 import 'splash_gate.dart';
 
@@ -41,31 +42,7 @@ class AccountScreen extends StatelessWidget {
   }
 
   Future<void> _support(BuildContext context) async {
-    final t = TextEditingController();
-    final m = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('المساعدة والدعم'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: t, decoration: const InputDecoration(labelText: 'عنوان المشكلة')),
-          const SizedBox(height: 8),
-          TextField(controller: m, maxLines: 3, decoration: const InputDecoration(labelText: 'التفاصيل')),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('إرسال')),
-        ],
-      ),
-    );
-    if (ok == true && t.text.trim().isNotEmpty && m.text.trim().isNotEmpty) {
-      try {
-        await RideService.createTicket(t.text.trim(), m.text.trim());
-        if (context.mounted) showSnack(context, 'تم إرسال تذكرتك. سنرد عليك قريباً');
-      } catch (_) {
-        if (context.mounted) showSnack(context, 'تعذر إرسال التذكرة', error: true);
-      }
-    }
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportTicketsScreen(role: 'rider')));
   }
 
   @override
