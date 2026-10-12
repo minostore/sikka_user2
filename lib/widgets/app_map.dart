@@ -44,7 +44,7 @@ class _AppMapState extends State<AppMap> {
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
-      // لون احتياطي هادئ بدل المساحة الكحلية الفارغة إذا تأخرت بلاطات الخريطة.
+      // خلفية فاتحة ثابتة حتى لا تظهر مساحة كحلية إذا فشل تحميل البلاطات.
       const Positioned.fill(child: ColoredBox(color: Color(0xFFE9EEF0))),
       FlutterMap(
         mapController: widget.controller,
@@ -61,6 +61,11 @@ class _AppMapState extends State<AppMap> {
           TileLayer(
             urlTemplate: AppConfig.tileUrl,
             userAgentPackageName: AppConfig.packageName,
+            maxNativeZoom: 19,
+            tileBuilder: (context, tileWidget, tile) => ColoredBox(
+              color: const Color(0xFFE9EEF0),
+              child: tileWidget,
+            ),
             errorTileCallback: (tile, error, stack) {
               if (!_tileError && mounted) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {

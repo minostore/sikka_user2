@@ -158,13 +158,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: _activeRide != null ? null : () => _start(),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F7), borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFE6EBEE))),
                   child: const Row(children: [
                     CircleAvatar(
-                      radius: 20,
+                      radius: 17,
                       backgroundColor: Color(0x1AFFB800),
                       child: Icon(Icons.search_rounded, color: AppColors.navy),
                     ),
@@ -174,10 +174,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('إلى أين تريد الذهاب؟',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.navy)),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.navy)),
                         SizedBox(height: 3),
                         Text('اختر وجهتك وسنوصلك بأقرب سائق',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF71808A))),
+                            style: TextStyle(fontSize: 10, color: Color(0xFF71808A))),
                       ],
                     )),
                     Icon(Icons.arrow_forward_ios_rounded, size: 15, color: Color(0xFF71808A)),
@@ -195,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                 ]),
               ],
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                   _drivers.isEmpty
                       ? 'لا يوجد سائقون قريبون حالياً'
