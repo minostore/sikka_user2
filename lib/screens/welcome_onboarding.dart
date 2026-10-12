@@ -14,7 +14,26 @@ class SikkaWelcome extends StatefulWidget {
 
 class _SikkaWelcomeState extends State<SikkaWelcome> {
   final PageController _pages = PageController();
+  late final Future<String?> _welcomeImageUrl;
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // The onboarding screen must also work in widget tests and when Firebase
+    // is temporarily unavailable. Fall back to the bundled slide images.
+    _welcomeImageUrl = _loadWelcomeImageUrl();
+  }
+
+  Future<String?> _loadWelcomeImageUrl() async {
+    try {
+      final event = await FirebaseDatabase.instance.ref('settings/welcome/riderImageUrl').once();
+      final value = event.snapshot.value?.toString();
+      return (value != null && value.startsWith('https://')) ? value : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   static const _slides = <_SlideData>[
     _SlideData(
@@ -118,11 +137,11 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                                       boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 24, offset: Offset(0, 10))],
                                     ),
                                     clipBehavior: Clip.antiAlias,
-                                    child: FutureBuilder<DatabaseEvent>(
-                                      future: FirebaseDatabase.instance.ref('settings/welcome/riderImageUrl').once(),
+                                    child: FutureBuilder<String?>(
+                                      future: _welcomeImageUrl,
                                       builder: (context, snap) {
-                                        final url = snap.data?.snapshot.value?.toString() ?? '';
-                                        if (url.startsWith('https://')) {
+                                        final url = snap.data;
+                                        if (url != null) {
                                           return Image.network(url, fit: BoxFit.cover,
                                             errorBuilder: (_, __, ___) => Image.asset(slide.image, fit: BoxFit.cover,
                                               errorBuilder: (_, __, ___) => Center(child: Icon(slide.fallbackIcon, size: 100, color: const Color(0xFFFFB800)))));
