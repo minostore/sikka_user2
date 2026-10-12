@@ -44,6 +44,8 @@ class _AppMapState extends State<AppMap> {
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
+      // لون احتياطي هادئ بدل المساحة الكحلية الفارغة إذا تأخرت بلاطات الخريطة.
+      const Positioned.fill(child: ColoredBox(color: Color(0xFFE9EEF0))),
       FlutterMap(
         mapController: widget.controller,
         options: MapOptions(
@@ -93,13 +95,13 @@ class _AppMapState extends State<AppMap> {
           left: 8,
           right: 8,
           child: Material(
-            color: AppColors.orange,
+            color: AppColors.navy,
             borderRadius: BorderRadius.circular(10),
             child: const Padding(
               padding: EdgeInsets.all(8),
               child: Text('تعذر تحميل بعض أجزاء الخريطة. تحقق من الإنترنت.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 12)),
+                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ),
         ),

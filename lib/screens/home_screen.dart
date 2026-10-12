@@ -110,9 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           child: InfoCard(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(children: [
               Expanded(
                   child: Text('مرحباً${_name.isEmpty ? '' : '، $_name'}',
@@ -160,12 +160,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F7), borderRadius: BorderRadius.circular(12)),
+                      color: const Color(0xFFF1F5F7), borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE6EBEE))),
                   child: const Row(children: [
-                    Icon(Icons.search, color: AppColors.primary),
-                    SizedBox(width: 10),
-                    Text('إلى أين تريد الذهاب؟',
-                        style: TextStyle(fontSize: 16, color: AppColors.navy)),
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Color(0x1AFFB800),
+                      child: Icon(Icons.search_rounded, color: AppColors.navy),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('إلى أين تريد الذهاب؟',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.navy)),
+                        SizedBox(height: 3),
+                        Text('اختر وجهتك وسنوصلك بأقرب سائق',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF71808A))),
+                      ],
+                    )),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 15, color: Color(0xFF71808A)),
                   ]),
                 ),
               ),
