@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
-import 'auth_driver.dart';
+import 'auth_rider.dart';
 
 /// واجهة ترحيب سكة — عربية RTL، بنفس لوحة الألوان المرجعية.
 class SikkaWelcome extends StatefulWidget {
