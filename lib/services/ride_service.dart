@@ -97,13 +97,12 @@ class RideService {
         }
         if (pts.length >= 3) activeZones.add(ServiceZone(id, (m['name'] ?? '').toString(), pts, true, numD(m['surgePercent'])));
       });
-      // توافقاً مع إعداد النظام الحالي: عدم وجود مناطق مفعّلة يعني عدم تقييد الخدمة.
-      if (activeZones.isNotEmpty) {
-        final pickupAllowed = activeZones.any((z) => z.contains(pickup.point));
-        final destAllowed = activeZones.any((z) => z.contains(dest.point));
-        if (!pickupAllowed) throw Exception('موقع الانطلاق خارج نطاق الخدمة. اختر نقطة داخل المنطقة المحددة.');
-        if (!destAllowed) throw Exception('الوجهة خارج نطاق الخدمة. اختر وجهة داخل المنطقة المحددة.');
-      }
+      // Fail closed: لا تُقبل الرحلات إذا لم تضبط الإدارة منطقة خدمة فعّالة.
+      if (activeZones.isEmpty) throw Exception('الخدمة غير متاحة حالياً؛ لم تحدد الإدارة مناطق خدمة فعّالة.');
+      final pickupAllowed = activeZones.any((z) => z.contains(pickup.point));
+      final destAllowed = activeZones.any((z) => z.contains(dest.point));
+      if (!pickupAllowed) throw Exception('موقع الانطلاق خارج نطاق الخدمة. اختر نقطة داخل المنطقة المحددة.');
+      if (!destAllowed) throw Exception('الوجهة خارج نطاق الخدمة. اختر وجهة داخل المنطقة المحددة.');
     } on FirebaseException catch (e) {
       throw Exception('تعذر التحقق من مناطق الخدمة. تحقق من اتصال Firebase والصلاحيات (${e.code}).');
     }

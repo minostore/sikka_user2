@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import '../core/config.dart';
 import 'auth_rider.dart';
 
 /// رحلة تعريفية من أربع خطوات لتطبيق المستخدم، تظهر قبل تسجيل الدخول.
@@ -116,10 +118,18 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                                       boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 24, offset: Offset(0, 10))],
                                     ),
                                     clipBehavior: Clip.antiAlias,
-                                    child: Image.asset(
-                                      slide.image,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Center(child: Icon(slide.fallbackIcon, size: 100, color: const Color(0xFFFFB800))),
+                                    child: FutureBuilder<DatabaseEvent>(
+                                      future: FirebaseDatabase.instance.ref('settings/welcome/riderImageUrl').once(),
+                                      builder: (context, snap) {
+                                        final url = snap.data?.snapshot.value?.toString() ?? '';
+                                        if (url.startsWith('https://')) {
+                                          return Image.network(url, fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Image.asset(slide.image, fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => Center(child: Icon(slide.fallbackIcon, size: 100, color: const Color(0xFFFFB800)))));
+                                        }
+                                        return Image.asset(slide.image, fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Center(child: Icon(slide.fallbackIcon, size: 100, color: const Color(0xFFFFB800))));
+                                      },
                                     ),
                                   ),
                                 ),
