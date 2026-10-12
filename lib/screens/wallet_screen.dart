@@ -34,8 +34,8 @@ class WalletScreen extends StatelessWidget {
       final ref = FirebaseDatabase.instance.ref('wallets/$uid/topups').push();
       await ref.set({'amount': amount, 'status': 'pending', 'createdAt': ServerValue.timestamp});
       if (context.mounted) showSnack(context, 'تم إرسال الطلب وسيتم مراجعته من الإدارة');
-    } catch (_) {
-      if (context.mounted) showSnack(context, 'تعذر إرسال الطلب', error: true);
+    } catch (e) {
+      if (context.mounted) showSnack(context, errorMessage(e, fallback: 'تعذر إرسال طلب الشحن'), error: true);
     }
   }
 

@@ -88,7 +88,7 @@ class _TripRequestScreenState extends State<TripRequestScreen> {
           MaterialPageRoute(builder: (_) => RideFlowScreen(rideId: id)),
           (r) => r.isFirst);
     } catch (e) {
-      showSnack(context, e.toString().replaceFirst('Exception: ', ''), error: true);
+      if (mounted) showSnack(context, errorMessage(e, fallback: 'تعذر إرسال طلب الرحلة'), error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

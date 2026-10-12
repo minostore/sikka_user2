@@ -90,8 +90,8 @@ class _OffersViewState extends State<_OffersView> {
     try {
       await RideService.cancel(widget.ride.id);
       if (mounted) Navigator.pop(context);
-    } catch (_) {
-      if (mounted) showSnack(context, 'تعذر إلغاء الطلب', error: true);
+    } catch (e) {
+      if (mounted) showSnack(context, errorMessage(e, fallback: 'تعذر إلغاء الطلب'), error: true);
     }
   }
 
@@ -103,8 +103,8 @@ class _OffersViewState extends State<_OffersView> {
     setState(() => _busy = true);
     try {
       await RideService.acceptOffer(widget.ride.id, o);
-    } catch (_) {
-      if (mounted) showSnack(context, 'تعذر قبول العرض. حاول مجدداً.', error: true);
+    } catch (e) {
+      if (mounted) showSnack(context, errorMessage(e, fallback: 'تعذر قبول العرض'), error: true);
     }
     if (mounted) setState(() => _busy = false);
   }
