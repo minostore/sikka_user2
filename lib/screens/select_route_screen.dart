@@ -6,6 +6,7 @@ import '../core/utils.dart';
 import '../models/place.dart';
 import '../services/geocoding_service.dart';
 import '../services/location_service.dart';
+import '../services/zone_service.dart';
 import '../widgets/app_map.dart';
 import '../widgets/map_utils.dart';
 import '../widgets/markers.dart';
@@ -140,11 +141,21 @@ class _SelectRouteScreenState extends State<SelectRouteScreen> {
             padding: const EdgeInsets.all(12),
             child: ElevatedButton(
               onPressed: ready
-                  ? () {
+                  ? () async {
                       if (haversineKm(_pickup!.point, _dest!.point) < 0.05) {
                         showSnack(context, 'نقطة الالتقاط والوجهة متطابقتان', error: true);
                         return;
                       }
+                      await ZoneService.ensureLoaded();
+                      if (!ZoneService.allowed(_pickup!.point)) {
+                        if (mounted) showSnack(context, ZoneService.outsideMessage, error: true);
+                        return;
+                      }
+                      if (!ZoneService.allowed(_dest!.point)) {
+                        if (mounted) showSnack(context, 'الوجهة خارج نطاق الخدمة المحدد من الإدارة.', error: true);
+                        return;
+                      }
+                      if (!mounted) return;
                       Navigator.push(
                           context,
                           MaterialPageRoute(

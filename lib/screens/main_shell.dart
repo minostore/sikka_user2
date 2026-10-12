@@ -3,6 +3,7 @@ import 'home_screen.dart';
 import 'trips_screen.dart';
 import 'wallet_screen.dart';
 import 'account_screen.dart';
+import '../services/zone_service.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -12,6 +13,8 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _i = 0;
+  @override
+  void initState() { super.initState(); ZoneService.start(); }
   @override
   Widget build(BuildContext context) => Scaffold(
         body: IndexedStack(index: _i, children: const [
