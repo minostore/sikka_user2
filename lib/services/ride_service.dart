@@ -57,7 +57,7 @@ class RideService {
         'minFare': numD(m['minFare'], 25),
         'perKm_car': rate('car'),
         'perKm_motorcycle': rate('motorcycle'),
-        'perKm_tuktuk': rate('tuktuk'),
+        'perKm_scooter': rate('scooter'),
       };
     } catch (_) {
       return {
@@ -66,7 +66,7 @@ class RideService {
         'minFare': 25,
         'perKm_car': 5,
         'perKm_motorcycle': 5,
-        'perKm_tuktuk': 5,
+        'perKm_scooter': 5,
       };
     }
   }
@@ -81,6 +81,7 @@ class RideService {
     required double durationMin,
     required double price,
     required String vehicleType,
+    String paymentMethod = 'cash',
     String note = '',
   }) async {
     if (await activeRideId() != null) {
@@ -139,7 +140,7 @@ class RideService {
       'price': price,
       'vehicleType': vehicleType,
       'note': note,
-      'paymentMethod': 'cash',
+      'paymentMethod': paymentMethod,
     };
     await db.update({
       'rides/$id': {...base, 'status': 'requested', 'createdAt': ServerValue.timestamp},

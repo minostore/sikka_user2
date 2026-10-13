@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../core/config.dart';
 import '../core/theme.dart';
 import '../core/utils.dart';
 import '../models/ride.dart';
@@ -50,6 +51,24 @@ class RideFlowScreen extends StatelessWidget {
 Future<void> _openCall(BuildContext c, String phone) async {
   if (phone.isEmpty) return showSnack(c, 'رقم الهاتف غير متاح', error: true);
   final ok = await launchUrl(Uri(scheme: 'tel', path: '+$phone'));
+  if (!ok && c.mounted) showSnack(c, 'تعذر فتح تطبيق الاتصال', error: true);
+}
+
+/// الطوارئ: يفتح الاتصال برقم النجدة. التطبيق لا يرسل أي استغاثة تلقائية.
+Future<void> _emergency(BuildContext c) async {
+  final go = await showDialog<bool>(
+    context: c,
+    builder: (ctx) => AlertDialog(
+      title: const Text('مكالمة طوارئ'),
+      content: Text('سيتم فتح تطبيق الاتصال على الرقم ${AppConfig.emergencyNumber}. لن يرسل التطبيق موقعك أو أي بلاغ تلقائياً.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('اتصال')),
+      ],
+    ),
+  );
+  if (go != true || !c.mounted) return;
+  final ok = await launchUrl(Uri(scheme: 'tel', path: AppConfig.emergencyNumber));
   if (!ok && c.mounted) showSnack(c, 'تعذر فتح تطبيق الاتصال', error: true);
 }
 
@@ -348,7 +367,7 @@ class _TrackingViewState extends State<_TrackingView> {
       Container(
         padding: const EdgeInsets.all(14),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: [BoxShadow(blurRadius: 12, color: Colors.black26)],
         ),
@@ -406,11 +425,20 @@ class _TrackingViewState extends State<_TrackingView> {
               const SizedBox(width: 8),
               Expanded(child: OutlinedButton.icon(onPressed: _report, icon: const Icon(Icons.report_problem_outlined), label: const Text('بلاغ'))),
             ]),
-            if (r.status == 'started')
+            if (r.status == 'accepted' || r.status == 'arrived' || r.status == 'started')
               SizedBox(width: double.infinity, child: OutlinedButton.icon(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RideChatScreen(rideId: r.id))),
                 icon: const Icon(Icons.chat_bubble_outline), label: const Text('محادثة مع السائق'),
               )),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _emergency(context),
+                style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: const BorderSide(color: AppColors.red)),
+                icon: const Icon(Icons.sos),
+                label: const Text('طوارئ'),
+              ),
+            ),
             if (r.status == 'accepted' || r.status == 'arrived')
               TextButton(
                 onPressed: _cancel,

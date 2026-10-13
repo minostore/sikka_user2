@@ -140,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   IconButton(
                     tooltip: 'خدمة العملاء',
-                    color: AppColors.navy,
+                    color: AppColors.ink,
                     icon: const Icon(Icons.support_agent),
                     onPressed: () => Navigator.push(
                       context,
@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   IconButton(
                     tooltip: 'الإشعارات',
-                    color: AppColors.navy,
+                    color: AppColors.ink,
                     icon: const Icon(Icons.notifications_none),
                     onPressed: () => Navigator.push(
                       context,
@@ -238,18 +238,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F7),
+                        color: AppColors.field,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE6EBEE)),
+                        border: Border.all(color: AppColors.border),
                       ),
                       child: const Row(
                         children: [
                           CircleAvatar(
                             radius: 17,
-                            backgroundColor: Color(0x1AFFB800),
+                            backgroundColor: Color(0x1AFFCC00),
                             child: Icon(
                               Icons.search_rounded,
-                              color: AppColors.navy,
+                              color: AppColors.primary,
                             ),
                           ),
                           SizedBox(width: 12),
@@ -263,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.navy,
+                                    color: AppColors.ink,
                                   ),
                                 ),
                                 SizedBox(height: 3),
@@ -271,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   'اختر وجهتك وسنوصلك بأقرب سائق',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF71808A),
+                                    color: Color(0xFFA9B4C2),
                                   ),
                                 ),
                               ],
@@ -280,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 15,
-                            color: Color(0xFF71808A),
+                            color: Color(0xFFA9B4C2),
                           ),
                         ],
                       ),
@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? 'لا يوجد سائقون قريبون حالياً'
                         : 'يوجد ${_drivers.length} سائق قريب منك',
                     style: const TextStyle(
-                      color: Color(0xFF52636D),
+                      color: Color(0xFFA9B4C2),
                       fontSize: 12,
                     ),
                   ),

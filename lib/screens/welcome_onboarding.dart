@@ -133,7 +133,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                       children: const [
                         Icon(
                           Icons.add_location_alt_rounded,
-                          color: Color(0xFFFFB800),
+                          color: Color(0xFFFFCC00),
                           size: 36,
                         ),
                         Text(
@@ -148,7 +148,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                         Text(
                           '— Sikka —',
                           style: TextStyle(
-                            color: Color(0xFFFFB800),
+                            color: Color(0xFFFFCC00),
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.2,
@@ -183,7 +183,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                             slide.title,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              color: Color(0xFFFFC23D),
+                              color: Color(0xFFFFD84D),
                               fontSize: 27,
                               fontWeight: FontWeight.w900,
                               height: 1.3,
@@ -214,7 +214,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                                       color: const Color(0xFF0C3155),
                                       borderRadius: BorderRadius.circular(30),
                                       border: Border.all(
-                                        color: const Color(0xFFFFB800),
+                                        color: const Color(0xFFFFCC00),
                                         width: 1.4,
                                       ),
                                       boxShadow: const [
@@ -241,7 +241,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                                             child: Icon(
                                               slide.fallbackIcon,
                                               size: 100,
-                                              color: const Color(0xFFFFB800),
+                                              color: const Color(0xFFFFCC00),
                                             ),
                                           ),
                                         );
@@ -288,7 +288,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                     height: 8,
                     decoration: BoxDecoration(
                       color: i == _index
-                          ? const Color(0xFFFFB800)
+                          ? const Color(0xFFFFCC00)
                           : Colors.white38,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -302,7 +302,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                   height: 56,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFB800),
+                      backgroundColor: const Color(0xFFFFCC00),
                       foregroundColor: const Color(0xFF061B31),
                       shape: const StadiumBorder(),
                       textStyle: const TextStyle(
@@ -338,7 +338,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                       child: const Text(
                         'تسجيل الدخول',
                         style: TextStyle(
-                          color: Color(0xFFFFB800),
+                          color: Color(0xFFFFCC00),
                           fontWeight: FontWeight.bold,
                         ),
                       ),

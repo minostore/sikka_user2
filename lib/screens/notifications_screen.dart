@@ -131,7 +131,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 final unread = n['_p'] == true && n['read'] != true;
                 final imageUrl = (n['imageUrl'] ?? '').toString();
                 return Card(
-                  color: unread ? const Color(0xFFFFFAE8) : Colors.white,
+                  color: unread ? const Color(0xFF221D10) : AppColors.card,
                   margin: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 4,
@@ -142,7 +142,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         leading: Icon(
                           unread ? Icons.circle : Icons.circle_outlined,
                           size: 12,
-                          color: AppColors.navy,
+                          color: AppColors.ink,
                         ),
                         title: Text(
                           (n['title'] ?? '').toString(),
@@ -153,7 +153,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                         subtitle: Text(
                           '${n['body'] ?? n['message'] ?? ''}\n${timeAgo((n['createdAt'] as num?)?.toInt())}',
-                          style: const TextStyle(color: Color(0xFF52636D)),
+                          style: const TextStyle(color: Color(0xFFA9B4C2)),
                         ),
                         isThreeLine: true,
                         onTap: () => _markRead(n),

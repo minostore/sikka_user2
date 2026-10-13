@@ -154,7 +154,7 @@ class _DriverHomeState extends State<DriverHome> {
       child: InfoCard(
         child: Column(children: [
           Row(children: [
-            const CircleAvatar(radius: 22, backgroundColor: Color(0xFFE9F1F5), child: Icon(Icons.person, color: AppColors.ink)),
+            const CircleAvatar(radius: 22, backgroundColor: AppColors.field, child: Icon(Icons.person, color: AppColors.ink)),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Text('طلب رحلة جديد', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),

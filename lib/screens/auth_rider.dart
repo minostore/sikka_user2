@@ -148,7 +148,7 @@ class _RiderSplashState extends State<RiderSplash> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bg,
         body: SafeArea(
           child: Column(children: [
             const SizedBox(height: 70),
@@ -191,10 +191,10 @@ class OnboardingScreen extends StatelessWidget {
           ]),
         );
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(children: [
-          Expanded(flex: 5, child: Padding(padding: const EdgeInsets.all(20), child: CustomPaint(painter: PhonePainter(), size: Size.infinite))),
+          const Expanded(flex: 5, child: Center(child: SikkaLogo(size: 260, radius: 32))),
           Expanded(
             flex: 4,
             child: Padding(
@@ -279,11 +279,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bg,
         body: SafeArea(
-          child: ListView(padding: const EdgeInsets.fromLTRB(24, 70, 24, 20), children: [
+          child: ListView(padding: const EdgeInsets.fromLTRB(24, 24, 24, 20), children: [
+            const Center(child: SikkaLogo(size: 150)),
+            const SizedBox(height: 18),
             const Text('مرحباً بعودتك', textAlign: TextAlign.center, style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900, color: AppColors.ink)),
-            const SizedBox(height: 40),
+            const SizedBox(height: 28),
             TextField(controller: _id, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: fieldDec(context, 'البريد الإلكتروني', Icons.mail_outline)),
             const SizedBox(height: 14),
             TextField(
@@ -350,7 +352,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bg,
         appBar: AppBar(title: const Text('إنشاء حساب'), backgroundColor: Colors.white),
         body: ListView(padding: const EdgeInsets.all(24), children: [
           TextField(controller: _name, decoration: fieldDec(context, 'الاسم الكامل', Icons.person_outline)),

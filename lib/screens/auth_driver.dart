@@ -216,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _city,
-              dropdownColor: const Color(0xFF173B5A),
+              dropdownColor: AppColors.field,
               style: const TextStyle(color: Colors.white),
               decoration: fieldDec(context, 'المدينة', Icons.location_city),
               items: cities.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),

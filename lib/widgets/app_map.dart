@@ -100,7 +100,7 @@ class _AppMapState extends State<AppMap> {
           left: 8,
           right: 8,
           child: Material(
-            color: AppColors.navy,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(10),
             child: const Padding(
               padding: EdgeInsets.all(8),
@@ -128,7 +128,7 @@ class _AppMapState extends State<AppMap> {
   }
 
   Widget _btn(IconData i, VoidCallback f) => Material(
-        color: Colors.white,
+        color: AppColors.card,
         elevation: 3,
         shape: const CircleBorder(),
         child: InkWell(
@@ -136,7 +136,7 @@ class _AppMapState extends State<AppMap> {
           onTap: f,
           child: Padding(
             padding: const EdgeInsets.all(9),
-            child: Icon(i, size: 22, color: AppColors.navy),
+            child: Icon(i, size: 22, color: AppColors.ink),
           ),
         ),
       );
