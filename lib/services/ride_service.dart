@@ -139,11 +139,6 @@ class RideService {
   }
 
   static Future<void> acceptOffer(String rideId, Offer o) async {
-    final rideBefore = asMap((await db.child('rides/$rideId').get()).value);
-    final riderId = (rideBefore['riderId'] ?? '').toString();
-    final blockedByRider = (await db.child('blocks/$riderId/${o.driverId}').get()).exists;
-    final blockedByDriver = (await db.child('blocks/${o.driverId}/$riderId').get()).exists;
-    if (blockedByRider || blockedByDriver) throw Exception('لا يمكن قبول العرض بسبب إعدادات الحظر بين الحسابين.');
     // Claim the ride with a transaction so two offers cannot win simultaneously.
     final code = (1000 + Random().nextInt(9000)).toString();
     final rideRef = db.child('rides/$rideId');

@@ -17,7 +17,7 @@ import '../widgets/common.dart';
 import '../widgets/markers.dart';
 import '../widgets/app_update_banner.dart';
 import 'notifications_screen.dart';
-import 'account_screen.dart';
+import 'support_tickets_screen.dart';
 import 'ride_flow_screen.dart';
 import 'select_route_screen.dart';
 
@@ -144,7 +144,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: const Icon(Icons.support_agent),
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AccountScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const SupportTicketsScreen(role: 'rider'),
+                      ),
                     ),
                   ),
                   IconButton(
