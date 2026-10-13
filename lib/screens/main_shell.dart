@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/local_notify.dart';
 import 'home_screen.dart';
 import 'trips_screen.dart';
 import 'wallet_screen.dart';
@@ -12,6 +13,19 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _i = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    LocalNotify.startListening();
+  }
+
+  @override
+  void dispose() {
+    LocalNotify.stopListening();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         body: IndexedStack(index: _i, children: const [

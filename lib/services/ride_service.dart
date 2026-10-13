@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../core/utils.dart';
@@ -157,7 +156,6 @@ class RideService {
 
   static Future<void> acceptOffer(String rideId, Offer o) async {
     // Claim the ride with a transaction so two offers cannot win simultaneously.
-    final code = (1000 + Random().nextInt(9000)).toString();
     final rideRef = db.child('rides/$rideId');
     final result = await rideRef.runTransaction((Object? value) {
       if (value is! Map) return Transaction.abort();
@@ -174,7 +172,6 @@ class RideService {
       ride['vehicle'] = o.vehicle;
       ride['driverRating'] = o.rating;
       ride['agreedPrice'] = o.price;
-      ride['startCode'] = code;
       ride['status'] = 'accepted';
       ride['acceptedAt'] = DateTime.now().millisecondsSinceEpoch;
       offers[o.driverId] = {...selected, 'status': 'accepted'};
