@@ -6,6 +6,7 @@ import '../core/utils.dart';
 import '../models/place.dart';
 import '../services/geocoding_service.dart';
 import '../services/location_service.dart';
+import '../services/routing_service.dart';
 import '../widgets/app_map.dart';
 import '../widgets/map_utils.dart';
 import '../widgets/markers.dart';
@@ -25,6 +26,8 @@ class _SelectRouteScreenState extends State<SelectRouteScreen> {
   Place? _pickup;
   Place? _dest;
   bool _locating = true;
+  RouteInfo? _route; // خط معاينة الطريق بين الانطلاق والوصول
+  int _routeSeq = 0;
 
   @override
   void initState() {
@@ -47,10 +50,27 @@ class _SelectRouteScreenState extends State<SelectRouteScreen> {
     }
   }
 
-  void _fit() => fitPoints(_map, [
-        if (_pickup != null) _pickup!.point,
-        if (_dest != null) _dest!.point,
-      ]);
+  void _fit() {
+    fitPoints(_map, [
+      if (_pickup != null) _pickup!.point,
+      if (_dest != null) _dest!.point,
+    ]);
+    _loadRoute();
+  }
+
+  /// يرسم خط الطريق بين نقطة الانطلاق والوصول (ويتجاهل نتائج الطلبات القديمة).
+  Future<void> _loadRoute() async {
+    final a = _pickup, b = _dest;
+    final seq = ++_routeSeq;
+    if (a == null || b == null) {
+      if (_route != null && mounted) setState(() => _route = null);
+      return;
+    }
+    final info = await RoutingService.route(a.point, b.point);
+    if (!mounted || seq != _routeSeq) return;
+    setState(() => _route = info);
+    fitPoints(_map, info.points);
+  }
 
   Future<void> _choose(bool pickup) async {
     final p = await Navigator.push<Place>(
@@ -127,6 +147,9 @@ class _SelectRouteScreenState extends State<SelectRouteScreen> {
               controller: _map,
               center: _pickup?.point ?? AppConfig.defaultCenter,
               zoom: 14,
+              polylines: [
+                if (_route != null) Polyline(points: _route!.points, strokeWidth: 5, color: AppColors.primary),
+              ],
               markers: [
                 if (_pickup != null) Markers.pin(_pickup!.point, AppColors.green),
                 if (_dest != null) Markers.pin(_dest!.point, AppColors.red),
@@ -135,6 +158,16 @@ class _SelectRouteScreenState extends State<SelectRouteScreen> {
             ),
           ),
         ),
+        if (_route != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Icon(Icons.route, size: 18, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text('${_route!.distanceKm.toStringAsFixed(1)} كم  •  ${_route!.durationMin.round()} دقيقة',
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
+            ]),
+          ),
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(12),

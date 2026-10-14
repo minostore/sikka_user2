@@ -5,6 +5,7 @@ import 'core/theme.dart';
 import 'firebase_options.dart';
 import 'screens/splash_gate.dart';
 import 'services/local_notify.dart';
+import 'services/nav_memory.dart';
 import 'services/zone_service.dart';
 
 Future<void> main() async {
@@ -17,6 +18,7 @@ Future<void> main() async {
   }
   if (initError == null) ZoneService.start();
   await LocalNotify.init();
+  await NavMemory.init();
   runApp(SikkaUserApp(initError: initError));
 }
 

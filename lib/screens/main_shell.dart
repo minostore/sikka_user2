@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/local_notify.dart';
+import '../services/nav_memory.dart';
+import '../services/push_service.dart';
+import '../services/ride_service.dart';
+import 'ride_flow_screen.dart';
 import 'home_screen.dart';
 import 'trips_screen.dart';
 import 'wallet_screen.dart';
@@ -12,12 +16,23 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _i = 0;
+  int _i = NavMemory.tab(4); // آخر تبويب كان فيه المستخدم قبل إغلاق التطبيق
 
   @override
   void initState() {
     super.initState();
     LocalNotify.startListening();
+    PushService.start();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreActiveRide());
+  }
+
+  /// إن كانت هناك رحلة جارية عند إعادة فتح التطبيق نعيد المستخدم إلى شاشتها مباشرة.
+  Future<void> _restoreActiveRide() async {
+    try {
+      final id = await RideService.activeRideId();
+      if (id == null || id.isEmpty || !mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => RideFlowScreen(rideId: id)));
+    } catch (_) {}
   }
 
   @override
@@ -37,7 +52,10 @@ class _MainShellState extends State<MainShell> {
         bottomNavigationBar: NavigationBar(
           height: 68,
           selectedIndex: _i,
-          onDestinationSelected: (v) => setState(() => _i = v),
+          onDestinationSelected: (v) {
+            NavMemory.saveTab(v);
+            setState(() => _i = v);
+          },
           destinations: const [
             NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
             NavigationDestination(icon: Icon(Icons.history), label: 'رحلاتي'),

@@ -12,6 +12,7 @@ import '../models/ride.dart';
 import '../services/ride_service.dart';
 import '../services/routing_service.dart';
 import '../widgets/app_map.dart';
+import '../widgets/back_guard.dart';
 import '../widgets/common.dart';
 import '../widgets/map_utils.dart';
 import '../widgets/markers.dart';
@@ -24,27 +25,32 @@ class RideFlowScreen extends StatelessWidget {
   const RideFlowScreen({super.key, required this.rideId});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('رحلتك')),
-        body: StreamBuilder<DatabaseEvent>(
-          stream: RideService.db.child('rides/$rideId').onValue,
-          builder: (c, s) {
-            if (s.hasError) return const ErrorView('تعذر تحميل بيانات الرحلة.');
-            if (!s.hasData) return const LoadingView();
-            if (!s.data!.snapshot.exists) return const EmptyView('الرحلة غير موجودة');
-            final ride = Ride.fromMap(rideId, asMap(s.data!.snapshot.value));
-            switch (ride.status) {
-              case 'requested':
-                return _OffersView(ride: ride);
-              case 'completed':
-                return _RatingView(ride: ride);
-              case 'cancelled':
-                return _CancelledView(ride: ride);
-              default:
-                return _TrackingView(ride: ride);
-            }
-          },
-        ),
+  Widget build(BuildContext context) => StreamBuilder<DatabaseEvent>(
+        stream: RideService.db.child('rides/$rideId').onValue,
+        builder: (c, s) {
+          if (s.hasError) return Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: const ErrorView('تعذر تحميل بيانات الرحلة.'));
+          if (!s.hasData) return Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: const LoadingView());
+          if (!s.data!.snapshot.exists) return Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: const EmptyView('الرحلة غير موجودة'));
+          final ride = Ride.fromMap(rideId, asMap(s.data!.snapshot.value));
+          switch (ride.status) {
+            case 'requested':
+              return Scaffold(appBar: AppBar(title: const Text('جاري البحث عن سائق')), body: _OffersView(ride: ride));
+            case 'completed':
+              return PopScope(
+                onPopInvokedWithResult: (didPop, _) {
+                  if (didPop) RideService.clearActive().catchError((_) {});
+                },
+                child: Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: _RatingView(ride: ride)),
+              );
+            case 'cancelled':
+              return Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: _CancelledView(ride: ride));
+            default:
+              // رحلة مؤكدة: الرجوع لا يعيد لصفحة سابقة، والضغطة الثانية تغلق التطبيق
+              return DoubleBackExit(
+                child: Scaffold(appBar: AppBar(title: const Text('رحلتك'), automaticallyImplyLeading: false), body: _TrackingView(ride: ride)),
+              );
+          }
+        },
       );
 }
 
@@ -131,115 +137,231 @@ class _OffersViewState extends State<_OffersView> {
   @override
   Widget build(BuildContext context) {
     final r = widget.ride;
-    return Column(children: [
-      InfoCard(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('من: ${r.pickup.address}', maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text('إلى: ${r.dest.address}', maxLines: 1, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 4),
-          Text('سعرك المقترح: ${money(r.price)} • ${r.distanceKm.toStringAsFixed(1)} كم',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-        ]),
-      ),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(children: [
-          const Text('الفرز: '),
-          for (final e in const {'price': 'السعر الأقل', 'eta': 'الأقرب وصولاً', 'rating': 'الأعلى تقييماً'}.entries)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 6),
-              child: ChoiceChip(
-                label: Text(e.value, style: const TextStyle(fontSize: 12)),
-                selected: _sort == e.key,
-                onSelected: (_) => setState(() => _sort = e.key),
-              ),
-            ),
-        ]),
-      ),
-      Expanded(
-        child: StreamBuilder<DatabaseEvent>(
-          stream: RideService.db.child('rides/${r.id}/offers').onValue,
-          builder: (c, s) {
-            final offers = <Offer>[];
-            if (s.hasData && s.data!.snapshot.exists) {
-              asMap(s.data!.snapshot.value).forEach((k, v) => offers.add(Offer.fromMap(k, asMap(v))));
-            }
-            offers.sort((a, b) {
-              switch (_sort) {
-                case 'eta':
-                  return a.etaMin.compareTo(b.etaMin);
-                case 'rating':
-                  return b.rating.compareTo(a.rating);
-                default:
-                  return a.price.compareTo(b.price);
-              }
-            });
-            final serverNow = DateTime.now().millisecondsSinceEpoch + _serverOffsetMs;
-            final expired = r.createdAt != null &&
-                serverNow - r.createdAt! > const Duration(seconds: 60).inMilliseconds;
-            if (offers.isEmpty) {
-              return Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  if (!expired) const CircularProgressIndicator(),
-                  const SizedBox(height: 14),
-                  Text(expired
-                      ? 'انتهت مهلة الطلب بدون عروض. ألغِ الطلب وأعد المحاولة.'
-                      : 'جاري إرسال طلبك للسائقين القريبين...'),
-                ]),
-              );
-            }
-            return ListView(padding: const EdgeInsets.all(12), children: [
-              for (final o in offers)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: InfoCard(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        CircleAvatar(
-                          backgroundImage: o.photoUrl.startsWith('http') ? NetworkImage(o.photoUrl) : null,
-                          child: o.photoUrl.startsWith('http') ? null : const Icon(Icons.person),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(o.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text('★ ${o.rating.toStringAsFixed(1)} • ${o.trips} مشوار',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                          ]),
-                        ),
-                        Text(money(o.price),
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
+    return StreamBuilder<DatabaseEvent>(
+      stream: RideService.db.child('rides/${r.id}/offers').onValue,
+      builder: (c, s) {
+        final offers = <Offer>[];
+        if (s.hasData && s.data!.snapshot.exists) {
+          asMap(s.data!.snapshot.value).forEach((k, v) => offers.add(Offer.fromMap(k, asMap(v))));
+        }
+        offers.sort((a, b) {
+          switch (_sort) {
+            case 'eta':
+              return a.etaMin.compareTo(b.etaMin);
+            case 'rating':
+              return b.rating.compareTo(a.rating);
+            default:
+              return a.price.compareTo(b.price);
+          }
+        });
+        final serverNow = DateTime.now().millisecondsSinceEpoch + _serverOffsetMs;
+        final expired = r.createdAt != null && serverNow - r.createdAt! > const Duration(seconds: 60).inMilliseconds;
+        final searching = offers.isEmpty;
+        return Column(children: [
+          // خريطة معاينة: نقطة الانطلاق ونقطة الوصول وخط الطريق
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: SizedBox(height: searching ? 210 : 150, child: _RoutePreview(ride: r)),
+          ),
+          Expanded(
+            child: searching
+                ? _SearchingPanel(expired: expired)
+                : Column(children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                      child: Row(children: [
+                        const Text('الفرز: '),
+                        for (final e in const {'price': 'السعر الأقل', 'eta': 'الأقرب وصولاً', 'rating': 'الأعلى تقييماً'}.entries)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 6),
+                            child: ChoiceChip(
+                              label: Text(e.value, style: const TextStyle(fontSize: 12)),
+                              selected: _sort == e.key,
+                              onSelected: (_) => setState(() => _sort = e.key),
+                            ),
+                          ),
                       ]),
-                      const SizedBox(height: 6),
-                      Text('${o.vehicle} • يصل خلال ${o.etaMin} دقائق'),
-                      if (o.note.isNotEmpty) Text(o.note, style: const TextStyle(color: Colors.grey)),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(42)),
-                        onPressed: _busy ? null : () => _accept(o),
-                        child: const Text('اختيار'),
-                      ),
-                    ]),
+                    ),
+                    Expanded(child: ListView(padding: const EdgeInsets.all(12), children: [for (final o in offers) _offerCard(o)])),
+                  ]),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                AppButton('إلغاء الطلب', onPressed: _cancel),
+                if (searching && !expired)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Text('سيتم إشعارك فور قبول الكابتن', style: TextStyle(color: Colors.grey, fontSize: 13)),
                   ),
-                ),
-            ]);
-          },
+              ]),
+            ),
+          ),
+        ]);
+      },
+    );
+  }
+
+  Widget _offerCard(Offer o) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: InfoCard(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              CircleAvatar(
+                backgroundImage: o.photoUrl.startsWith('http') ? NetworkImage(o.photoUrl) : null,
+                child: o.photoUrl.startsWith('http') ? null : const Icon(Icons.person),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(o.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('★ ${o.rating.toStringAsFixed(1)} • ${o.trips} مشوار', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                ]),
+              ),
+              Text(money(o.price), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
+            ]),
+            const SizedBox(height: 6),
+            Text('${o.vehicle} • يصل خلال ${o.etaMin} دقائق'),
+            if (o.note.isNotEmpty) Text(o.note, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(42)),
+              onPressed: _busy ? null : () => _accept(o),
+              child: const Text('اختيار'),
+            ),
+          ]),
+        ),
+      );
+}
+
+/// معاينة الرحلة: نقطتا الانطلاق والوصول وخط الطريق بينهما.
+class _RoutePreview extends StatefulWidget {
+  final Ride ride;
+  const _RoutePreview({required this.ride});
+  @override
+  State<_RoutePreview> createState() => _RoutePreviewState();
+}
+
+class _RoutePreviewState extends State<_RoutePreview> {
+  final _map = MapController();
+  RouteInfo? _route;
+
+  @override
+  void initState() {
+    super.initState();
+    RoutingService.route(widget.ride.pickup.point, widget.ride.dest.point).then((info) {
+      if (!mounted) return;
+      setState(() => _route = info);
+      fitPoints(_map, info.points);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.ride;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: IgnorePointer(
+        child: AppMap(
+          controller: _map,
+          center: r.pickup.point,
+          zoom: 13,
+          showControls: false,
+          polylines: [if (_route != null) Polyline(points: _route!.points, strokeWidth: 5, color: AppColors.primary)],
+          markers: [Markers.pin(r.pickup.point, AppColors.green), Markers.pin(r.dest.point, AppColors.red)],
         ),
       ),
-      SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: OutlinedButton(
-            style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.red, minimumSize: const Size.fromHeight(48)),
-            onPressed: _cancel,
-            child: const Text('إلغاء الطلب'),
+    );
+  }
+}
+
+/// لوحة البحث: رادار متحرك + عنوان + مراحل الطلب (إرسال ← بحث ← تأكيد).
+class _SearchingPanel extends StatefulWidget {
+  final bool expired;
+  const _SearchingPanel({required this.expired});
+  @override
+  State<_SearchingPanel> createState() => _SearchingPanelState();
+}
+
+class _SearchingPanelState extends State<_SearchingPanel> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  Widget _step(String label, {required bool done, required bool active}) => Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: done ? AppColors.primary : Colors.transparent,
+            border: Border.all(color: done || active ? AppColors.primary : AppColors.border, width: 2),
+          ),
+          child: done
+              ? const Icon(Icons.check, size: 18, color: AppColors.navy)
+              : active
+                  ? Center(child: Container(width: 10, height: 10, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)))
+                  : null,
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: active ? FontWeight.w800 : FontWeight.normal, color: done || active ? Colors.white : Colors.grey)),
+      ]);
+
+  Widget _line(bool on) => Expanded(child: Padding(padding: const EdgeInsets.only(bottom: 22), child: Container(height: 2, color: on ? AppColors.primary : AppColors.border)));
+
+  @override
+  Widget build(BuildContext context) => Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        SizedBox(
+          width: 170,
+          height: 170,
+          child: AnimatedBuilder(
+            animation: _c,
+            builder: (_, __) => Stack(alignment: Alignment.center, children: [
+              if (!widget.expired)
+                for (var i = 0; i < 3; i++)
+                  Builder(builder: (_) {
+                    final t = (_c.value + i / 3) % 1;
+                    return Opacity(
+                      opacity: (1 - t) * 0.7,
+                      child: Container(
+                        width: 70 + 100 * t,
+                        height: 70 + 100 * t,
+                        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.primary, width: 2)),
+                      ),
+                    );
+                  }),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.card, border: Border.all(color: AppColors.primary, width: 2.5)),
+                child: const Icon(Icons.two_wheeler_rounded, color: AppColors.primary, size: 38),
+              ),
+            ]),
           ),
         ),
-      ),
-    ]);
-  }
+        const SizedBox(height: 8),
+        Text(widget.expired ? 'لم يصل أي عرض بعد' : 'جاري البحث عن سائق قريب منك', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 6),
+        Text(widget.expired ? 'انتهت مهلة الطلب. ألغِ الطلب وأعد المحاولة.' : 'نبحث عن أفضل كابتن لرحلتك، يرجى الانتظار',
+            textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+        const SizedBox(height: 18),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 36),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _step('إرسال الطلب', done: true, active: false),
+            _line(true),
+            _step('البحث عن كابتن', done: false, active: true),
+            _line(false),
+            _step('تأكيد الرحلة', done: false, active: false),
+          ]),
+        ),
+      ]);
 }
 
 // ───────────────────────── التتبع ─────────────────────────

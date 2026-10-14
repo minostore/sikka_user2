@@ -1,3 +1,4 @@
+import 'push_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -86,7 +87,10 @@ class AuthService {
     await _db.update(updates);
   }
 
-  static Future<void> signOut() => _auth.signOut();
+  static Future<void> signOut() async {
+    await PushService.clearToken();
+    await _auth.signOut();
+  }
 
   static Future<void> resetPassword(String email) =>
       _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
