@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -34,6 +35,7 @@ class _TripRequestScreenState extends State<TripRequestScreen> {
     'perKm_scooter': 5,
   };
   String _vehicle = 'regular';
+  Map<String, String> _vehicleImages = {}; // صور المركبات من لوحة التحكم
   String _payment = 'cash';
   bool _loading = true;
   bool _busy = false;
@@ -43,6 +45,19 @@ class _TripRequestScreenState extends State<TripRequestScreen> {
   void initState() {
     super.initState();
     _load();
+    _loadVehicleImages();
+  }
+
+  Future<void> _loadVehicleImages() async {
+    try {
+      final v = (await FirebaseDatabase.instance.ref('settings/vehicleImages').get()).value;
+      if (v is Map && mounted) {
+        setState(() => _vehicleImages = {
+              for (final e in v.entries)
+                if (e.value is String && (e.value as String).startsWith('https://')) e.key.toString(): e.value as String,
+            });
+      }
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -263,8 +278,20 @@ class _TripRequestScreenState extends State<TripRequestScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, color: sel ? AppColors.primary : Colors.grey),
-          const SizedBox(width: 6),
+          if (_vehicleImages[v] != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                _vehicleImages[v]!,
+                width: 46,
+                height: 46,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Icon(icon, color: sel ? AppColors.primary : Colors.grey),
+              ),
+            )
+          else
+            Icon(icon, color: sel ? AppColors.primary : Colors.grey),
+          const SizedBox(width: 8),
           Text(label),
         ]),
       ),

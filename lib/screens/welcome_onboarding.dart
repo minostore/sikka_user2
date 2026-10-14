@@ -26,6 +26,21 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
     _welcomeImages = _loadWelcomeImages();
   }
 
+  List<String?> _posterUrls = const []; // روابط صور لوحة التحكم (تُعرض كبوستر كامل)
+  List<(String, String)> _explicit = const []; // العنوان/النص المكتوبان فعلاً في لوحة التحكم
+
+  bool _isPoster(int i) => (i < _slides.length && _slides[i].poster) || (i < _posterUrls.length && _posterUrls[i] != null);
+
+  Widget _posterFor(int i) {
+    final url = i < _posterUrls.length ? _posterUrls[i] : null;
+    final ex = i < _explicit.length ? _explicit[i] : ('', '');
+    return _PosterSlide(
+      image: url != null ? NetworkImage(url) as ImageProvider : AssetImage(_slides[i].image),
+      title: url != null ? ex.$1 : '',
+      subtitle: url != null ? ex.$2 : '',
+    );
+  }
+
   List<_SlideData> _slides = _defaults;
 
   static List<Map<String, dynamic>> _slideEntries(dynamic raw) {
@@ -56,6 +71,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
       if (entries.isEmpty) return _loadLegacyImages();
       final slides = <_SlideData>[];
       final urls = <String?>[];
+      final explicit = <(String, String)>[];
       for (var i = 0; i < entries.length; i++) {
         final e = entries[i];
         final base = i < _defaults.length ? _defaults[i] : null;
@@ -64,10 +80,13 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
         final image = (e['image'] ?? '').toString();
         slides.add(_SlideData(title.isNotEmpty ? title : (base?.title ?? ''), subtitle.isNotEmpty ? subtitle : (base?.subtitle ?? ''), base?.image ?? '', base?.fallbackIcon ?? Icons.directions_car_filled_rounded));
         urls.add(image.startsWith('https://') ? image : null);
+        explicit.add((title, subtitle));
       }
       if (mounted) {
         setState(() {
           _slides = slides;
+          _posterUrls = urls;
+          _explicit = explicit;
           if (_index >= slides.length) _index = 0;
         });
       }
@@ -180,7 +199,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                 child: Row(
                   children: [
                     const Spacer(),
-                    Column(
+                    _hideIf(_isPoster(_index), Column(
                       children: const [
                         Icon(
                           Icons.add_location_alt_rounded,
@@ -206,7 +225,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                           ),
                         ),
                       ],
-                    ),
+                    )),
                     const Spacer(),
                     TextButton(
                       onPressed: _openLogin,
@@ -224,6 +243,7 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
                   itemCount: _slides.length,
                   onPageChanged: (i) => setState(() => _index = i),
                   itemBuilder: (context, i) {
+                    if (_isPoster(i)) return _posterFor(i);
                     final slide = _slides[i];
                     return Padding(
                       padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
@@ -410,5 +430,41 @@ class _SlideData {
   final String subtitle;
   final String image;
   final IconData fallbackIcon;
-  const _SlideData(this.title, this.subtitle, this.image, this.fallbackIcon);
+  final bool poster;
+  const _SlideData(this.title, this.subtitle, this.image, this.fallbackIcon, {this.poster = false});
 }
+
+/// شريحة «بوستر» كاملة: الصورة تملأ المساحة (من لوحة التحكم)، والعنوان/النص اختياريان تحتها.
+class _PosterSlide extends StatelessWidget {
+  final ImageProvider image;
+  final String title, subtitle;
+  const _PosterSlide({required this.image, this.title = '', this.subtitle = ''});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+        child: Column(children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Image(
+                image: image,
+                width: double.infinity,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.image_not_supported_outlined, color: Colors.white38, size: 64)),
+              ),
+            ),
+          ),
+          if (title.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFFFD84D), fontSize: 22, fontWeight: FontWeight.w900)),
+          ],
+          if (subtitle.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFD5DFEA), fontSize: 14, height: 1.5)),
+          ],
+        ]),
+      );
+}
+
+Widget _hideIf(bool hide, Widget child) => Visibility(visible: !hide, maintainSize: true, maintainAnimation: true, maintainState: true, child: child);
