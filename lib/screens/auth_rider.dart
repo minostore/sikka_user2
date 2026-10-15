@@ -5,6 +5,7 @@ import '../core/theme.dart';
 import '../core/utils.dart';
 import '../services/auth_service.dart';
 import '../widgets/common.dart';
+import '../widgets/phone_field.dart';
 
 // ───────────── رسومات التصميم ─────────────
 class SkylinePainter extends CustomPainter {
@@ -331,17 +332,17 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _name = TextEditingController(), _phone = TextEditingController(), _email = TextEditingController(), _pass = TextEditingController();
-  bool _agree = false, _busy = false;
+  bool _agree = false, _busy = false, _hide = true;
 
   Future<void> _submit() async {
     if (_name.text.trim().length < 3) return showSnack(context, 'أدخل الاسم الكامل', error: true);
-    if (!AuthService.isValidPhone(_phone.text)) return showSnack(context, 'أدخل رقم موبايل مصري صحيح (مثال: 01012345678)', error: true);
     if (!_email.text.contains('@') || !_email.text.contains('.')) return showSnack(context, 'أدخل بريداً إلكترونياً صحيحاً', error: true);
+    if (!PhoneField.isValid(_phone.text)) return showSnack(context, PhoneField.errorText, error: true);
     if (_pass.text.length < 6) return showSnack(context, 'كلمة المرور 6 أحرف على الأقل', error: true);
     if (!_agree) return showSnack(context, 'يجب الموافقة على الشروط والأحكام', error: true);
     setState(() => _busy = true);
     try {
-      await AuthService.register(name: _name.text.trim(), phone: _phone.text, email: _email.text.trim(), password: _pass.text);
+      await AuthService.register(name: _name.text.trim(), phone: PhoneField.full(_phone.text), email: _email.text.trim(), password: _pass.text);
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => widget.homeBuilder()), (r) => false);
     } catch (e) {
@@ -355,13 +356,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: AppColors.bg,
         appBar: AppBar(title: const Text('إنشاء حساب'), backgroundColor: Colors.white),
         body: ListView(padding: const EdgeInsets.all(24), children: [
-          TextField(controller: _name, decoration: fieldDec(context, 'الاسم الكامل', Icons.person_outline)),
-          const SizedBox(height: 14),
-          TextField(controller: _phone, keyboardType: TextInputType.phone, textDirection: TextDirection.ltr, decoration: fieldDec(context, 'رقم الموبايل (01xxxxxxxxx)', Icons.phone_outlined)),
+          TextField(controller: _name, decoration: fieldDec(context, 'الاسم', Icons.person_outline)),
           const SizedBox(height: 14),
           TextField(controller: _email, keyboardType: TextInputType.emailAddress, textDirection: TextDirection.ltr, decoration: fieldDec(context, 'البريد الإلكتروني', Icons.mail_outline)),
           const SizedBox(height: 14),
-          TextField(controller: _pass, obscureText: true, decoration: fieldDec(context, 'كلمة المرور', Icons.lock_outline)),
+          PhoneField(controller: _phone),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _pass,
+            obscureText: _hide,
+            decoration: fieldDec(context, 'كلمة المرور', Icons.lock_outline, suffix: IconButton(icon: Icon(_hide ? Icons.visibility_off : Icons.visibility), onPressed: () => setState(() => _hide = !_hide))),
+          ),
           CheckboxListTile(
             value: _agree,
             onChanged: (v) => setState(() => _agree = v ?? false),

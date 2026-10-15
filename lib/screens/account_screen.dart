@@ -5,33 +5,16 @@ import '../core/theme.dart';
 import '../core/utils.dart';
 import '../models/place.dart';
 import '../services/auth_service.dart';
-import '../services/ride_service.dart';
 import '../widgets/common.dart';
-import 'notifications_screen.dart';
-import 'support_tickets_screen.dart';
+import 'daily_trips_screen.dart';
+import 'edit_profile_screen.dart';
+import 'legal_screen.dart';
 import 'place_search_screen.dart';
 import 'splash_gate.dart';
+import 'support_home_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
-
-  Future<void> _editName(BuildContext context, String uid, String current) async {
-    final c = TextEditingController(text: current);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('تعديل الاسم'),
-        content: TextField(controller: c),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حفظ')),
-        ],
-      ),
-    );
-    if (ok == true && c.text.trim().length >= 3) {
-      await FirebaseDatabase.instance.ref('users/$uid/name').set(c.text.trim());
-    }
-  }
 
   Future<void> _setPlace(BuildContext context, String uid, String key) async {
     final p = await Navigator.push<Place>(
@@ -39,10 +22,6 @@ class AccountScreen extends StatelessWidget {
     if (p != null) {
       await FirebaseDatabase.instance.ref('users/$uid/places/$key').set(p.toMap());
     }
-  }
-
-  Future<void> _support(BuildContext context) async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportTicketsScreen(role: 'rider')));
   }
 
   @override
@@ -56,22 +35,37 @@ class AccountScreen extends StatelessWidget {
           if (!s.hasData) return const LoadingView();
           final m = asMap(s.data!.snapshot.value);
           final name = (m['name'] ?? '').toString();
+          final photo = (m['photoUrl'] ?? '').toString();
           final places = asMap(m['places']);
           Widget item(IconData i, String t, VoidCallback f, {String? sub}) => ListTile(
               leading: Icon(i, color: AppColors.primary), title: Text(t), subtitle: sub == null ? null : Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis), trailing: const Icon(Icons.chevron_left), onTap: f);
           return ListView(children: [
-            const SizedBox(height: 16),
-            const CircleAvatar(radius: 40, child: Icon(Icons.person, size: 40)),
-            const SizedBox(height: 8),
-            Center(child: Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
-            Center(child: Text('+${m['phone'] ?? ''}', textDirection: TextDirection.ltr, style: const TextStyle(color: Colors.grey))),
-            const SizedBox(height: 12),
-            item(Icons.edit, 'تعديل الملف الشخصي', () => _editName(context, uid, name)),
+            // الصورة والاسم أعلى اليمين
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: AppColors.primary,
+                  backgroundImage: photo.startsWith('http') ? NetworkImage(photo) : null,
+                  child: photo.startsWith('http') ? null : const Icon(Icons.person, size: 34, color: AppColors.navy),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text('+${m['phone'] ?? ''}', textDirection: TextDirection.ltr, style: const TextStyle(color: Colors.grey)),
+                  ]),
+                ),
+              ]),
+            ),
+            const Divider(),
+            item(Icons.edit, 'تعديل الملف الشخصي', () => Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen(data: m)))),
             item(Icons.home, 'عنوان المنزل', () => _setPlace(context, uid, 'home'), sub: asMap(places['home'])['address']?.toString()),
             item(Icons.work, 'عنوان العمل', () => _setPlace(context, uid, 'work'), sub: asMap(places['work'])['address']?.toString()),
-            item(Icons.notifications_none, 'الإشعارات', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
-            item(Icons.support_agent, 'المساعدة والدعم', () => _support(context)),
-            item(Icons.description_outlined, 'الشروط والخصوصية', () => showDialog(context: context, builder: (ctx) => AlertDialog(title: const Text('الشروط والخصوصية'), content: const Text('باستخدامك مشوار فأنت توافق على: تقديم بيانات صحيحة، الالتزام بالسعر المتفق عليه مع السائق، احترام السائقين والركاب، وعدم إساءة استخدام التطبيق. نستخدم موقعك أثناء استخدام التطبيق فقط لتحديد الالتقاط وتتبع الرحلة، ولا نشاركه مع أي جهة خارج الرحلة. يمكنك طلب حذف بياناتك عبر الدعم.'), actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إغلاق'))]))),
+            item(Icons.event_repeat, 'الرحلات اليومية', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyTripsScreen()))),
+            item(Icons.support_agent, 'المساعدة والدعم', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportHomeScreen(role: 'rider')))),
+            item(Icons.description_outlined, 'الشروط والخصوصية', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen()))),
             ListTile(
               leading: const Icon(Icons.logout, color: AppColors.red),
               title: const Text('تسجيل الخروج', style: TextStyle(color: AppColors.red)),

@@ -8,37 +8,6 @@ import '../widgets/common.dart';
 class WalletScreen extends StatelessWidget {
   const WalletScreen({super.key});
 
-  Future<void> _topup(BuildContext context, String uid) async {
-    final ctrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('طلب شحن الرصيد'),
-        content: TextField(
-            controller: ctrl,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'المبلغ')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('إرسال الطلب')),
-        ],
-      ),
-    );
-    final amount = double.tryParse(ctrl.text.trim()) ?? 0;
-    if (ok != true) return;
-    if (amount <= 0) {
-      if (context.mounted) showSnack(context, 'أدخل مبلغاً صحيحاً', error: true);
-      return;
-    }
-    try {
-      final ref = FirebaseDatabase.instance.ref('wallets/$uid/topups').push();
-      await ref.set({'amount': amount, 'status': 'pending', 'createdAt': ServerValue.timestamp});
-      if (context.mounted) showSnack(context, 'تم إرسال الطلب وسيتم مراجعته من الإدارة');
-    } catch (e) {
-      if (context.mounted) showSnack(context, errorMessage(e, fallback: 'تعذر إرسال طلب الشحن'), error: true);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
@@ -63,29 +32,9 @@ class WalletScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(money(numD(m['balance'])),
                     style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                    onPressed: () => _topup(context, uid),
-                    icon: const Icon(Icons.add),
-                    label: const Text('طلب شحن رصيد')),
               ]),
             ),
             const SizedBox(height: 12),
-            const InfoCard(
-                child: Text('طريقة الدفع الحالية: نقداً للسائق عند نهاية الرحلة.',
-                    style: TextStyle(color: Colors.grey))),
-            const SizedBox(height: 16),
-            const Text('طلبات الشحن', style: TextStyle(fontWeight: FontWeight.bold)),
-            if (topups.isEmpty) const Padding(padding: EdgeInsets.all(12), child: Text('لا توجد طلبات', style: TextStyle(color: Colors.grey))),
-            for (final t in topups)
-              ListTile(
-                leading: const Icon(Icons.add_card),
-                title: Text(money(numD(t['amount']))),
-                subtitle: Text(dateLabel((t['createdAt'] as num?)?.toInt())),
-                trailing: Pill(
-                    t['status'] == 'approved' ? 'مقبول' : t['status'] == 'rejected' ? 'مرفوض' : 'قيد المراجعة',
-                    t['status'] == 'approved' ? AppColors.green : t['status'] == 'rejected' ? AppColors.red : AppColors.orange),
-              ),
             const SizedBox(height: 12),
             const Text('سجل العمليات', style: TextStyle(fontWeight: FontWeight.bold)),
             if (tx.isEmpty) const Padding(padding: EdgeInsets.all(12), child: Text('لا توجد عمليات', style: TextStyle(color: Colors.grey))),

@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/theme.dart';
+import 'widgets/update_gate.dart';
 import 'firebase_options.dart';
 import 'screens/splash_gate.dart';
 import 'services/local_notify.dart';
@@ -31,6 +32,7 @@ class SikkaUserApp extends StatelessWidget {
         title: 'Sikka User',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
+        builder: (context, child) => UpdateGate(role: 'rider', child: child ?? const SizedBox.shrink()),
         locale: const Locale('ar'),
         supportedLocales: const [Locale('ar')],
         localizationsDelegates: const [

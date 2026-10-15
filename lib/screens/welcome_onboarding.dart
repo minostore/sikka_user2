@@ -162,267 +162,177 @@ class _SikkaWelcomeState extends State<SikkaWelcome> {
   }
 
   void _openLogin() => Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (_) => LoginScreen(homeBuilder: widget.homeBuilder),
-    ),
-  );
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen(homeBuilder: widget.homeBuilder)),
+      );
+
+  void _openRegister() => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => RegisterScreen(homeBuilder: widget.homeBuilder)),
+      );
+
+  bool get _isLast => _index >= _slides.length - 1;
 
   void _next() {
-    if (_index < _slides.length - 1) {
-      _pages.nextPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
+    if (!_isLast) {
+      _pages.nextPage(duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
     } else {
-      _openLogin();
+      _openRegister();
     }
+  }
+
+  /// شريحة بحجم الشاشة كاملة (صورة من لوحة التحكم أو الصورة الافتراضية).
+  Widget _fullSlide(int i) {
+    final slide = _slides[i];
+    final url = i < _posterUrls.length ? _posterUrls[i] : null;
+    final ex = i < _explicit.length ? _explicit[i] : ('', '');
+    final title = url != null ? ex.$1 : slide.title;
+    final subtitle = url != null ? ex.$2 : slide.subtitle;
+    final fallback = Container(
+      color: const Color(0xFF0C3155),
+      child: Center(child: Icon(slide.fallbackIcon, size: 120, color: const Color(0xFFFFCC00))),
+    );
+    final Widget image = url != null
+        ? Image.network(url, fit: BoxFit.cover, width: double.infinity, height: double.infinity, errorBuilder: (_, __, ___) => fallback)
+        : Image.asset(slide.image, fit: BoxFit.cover, width: double.infinity, height: double.infinity, errorBuilder: (_, __, ___) => fallback);
+    return Stack(fit: StackFit.expand, children: [
+      image,
+      const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x66000000), Color(0x00000000), Color(0xD9000000)],
+            stops: [0, 0.35, 1],
+          ),
+        ),
+      ),
+      if (title.isNotEmpty || subtitle.isNotEmpty)
+        Positioned(
+          left: 24,
+          right: 24,
+          bottom: 190,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            if (title.isNotEmpty)
+              Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFFFD84D), fontSize: 26, fontWeight: FontWeight.w900, height: 1.3)),
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.5)),
+            ],
+          ]),
+        ),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.rtl,
-    child: Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF03172D), Color(0xFF082B4C), Color(0xFF031326)],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    _hideIf(_isPoster(_index), Column(
-                      children: const [
-                        Icon(
-                          Icons.add_location_alt_rounded,
-                          color: Color(0xFFFFCC00),
-                          size: 36,
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: const Color(0xFF03172D),
+          body: Stack(children: [
+            // الصور تملأ الشاشة بالكامل
+            Positioned.fill(
+              child: PageView.builder(
+                controller: _pages,
+                itemCount: _slides.length,
+                onPageChanged: (i) => setState(() => _index = i),
+                itemBuilder: (context, i) => _fullSlide(i),
+              ),
+            ),
+            // زر «التالي» أعلى الصفحة حتى تنتهي الصور
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                    if (!_isLast)
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFCC00),
+                          foregroundColor: const Color(0xFF061B31),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                         ),
-                        Text(
-                          'سِكّة',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 31,
-                            fontWeight: FontWeight.w900,
-                            height: 1.0,
-                          ),
-                        ),
-                        Text(
-                          '— Sikka —',
-                          style: TextStyle(
-                            color: Color(0xFFFFCC00),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    )),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: _openLogin,
-                      child: const Text(
-                        'تخطي',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    ),
-                  ],
+                        onPressed: _next,
+                        icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                        label: const Text('التالي'),
+                      )
+                    else
+                      const SizedBox(height: 44),
+                  ]),
                 ),
               ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pages,
-                  itemCount: _slides.length,
-                  onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (context, i) {
-                    if (_isPoster(i)) return _posterFor(i);
-                    final slide = _slides[i];
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 8),
-                          Text(
-                            slide.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFFFD84D),
-                              fontSize: 27,
-                              fontWeight: FontWeight.w900,
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 9),
-                          Text(
-                            slide.subtitle,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFD5DFEA),
-                              fontSize: 15,
-                              height: 1.55,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Expanded(
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 350,
-                                  maxHeight: 360,
-                                ),
-                                child: AspectRatio(
-                                  aspectRatio: 4 / 5,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0C3155),
-                                      borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(
-                                        color: const Color(0xFFFFCC00),
-                                        width: 1.4,
-                                      ),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Colors.black38,
-                                          blurRadius: 24,
-                                          offset: Offset(0, 10),
-                                        ),
-                                      ],
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: FutureBuilder<List<String?>>(
-                                      future: _welcomeImages,
-                                      builder: (context, snap) {
-                                        final url =
-                                            snap.data != null &&
-                                                i < snap.data!.length
-                                            ? snap.data![i]
-                                            : null;
-                                        final fallback = Image.asset(
-                                          slide.image,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => Center(
-                                            child: Icon(
-                                              slide.fallbackIcon,
-                                              size: 100,
-                                              color: const Color(0xFFFFCC00),
-                                            ),
-                                          ),
-                                        );
-                                        final image = url == null
-                                            ? fallback
-                                            : Image.network(
-                                                url,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) =>
-                                                    fallback,
-                                              );
-                                        return GestureDetector(
-                                          onTap: () => showDialog<void>(
-                                            context: context,
-                                            builder: (_) => Dialog(
-                                              child: InteractiveViewer(
-                                                child: image,
-                                              ),
-                                            ),
-                                          ),
-                                          child: image,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _slides.length,
-                  (i) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: i == _index ? 26 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: i == _index
-                          ? const Color(0xFFFFCC00)
-                          : Colors.white38,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFCC00),
-                      foregroundColor: const Color(0xFF061B31),
-                      shape: const StadiumBorder(),
-                      textStyle: const TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    onPressed: _next,
-                    child: Row(
+            ),
+            // المؤشر وأزرار النهاية
+            Positioned(
+              left: 24,
+              right: 24,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _index == _slides.length - 1 ? 'ابدأ الآن' : 'التالي',
-                        ),
-                        const SizedBox(width: 10),
-                        const Icon(Icons.arrow_forward_rounded),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 15, top: 5),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  children: [
-                    const Text(
-                      'لديك حساب بالفعل؟ ',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    GestureDetector(
-                      onTap: _openLogin,
-                      child: const Text(
-                        'تسجيل الدخول',
-                        style: TextStyle(
-                          color: Color(0xFFFFCC00),
-                          fontWeight: FontWeight.bold,
+                      children: List.generate(
+                        _slides.length,
+                        (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: i == _index ? 26 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: i == _index ? const Color(0xFFFFCC00) : Colors.white54,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
-                  ],
+                    if (_isLast) ...[
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFCC00),
+                            foregroundColor: const Color(0xFF061B31),
+                            shape: const StadiumBorder(),
+                            textStyle: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+                          ),
+                          onPressed: _openRegister,
+                          child: const Text('ابدأ الآن'),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white70, width: 1.4),
+                            shape: const StadiumBorder(),
+                            textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                          ),
+                          onPressed: _openLogin,
+                          child: const Text('تسجيل الدخول'),
+                        ),
+                      ),
+                    ],
+                  ]),
                 ),
               ),
-            ],
-          ),
+            ),
+          ]),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 class _SlideData {
