@@ -10,6 +10,7 @@ import 'daily_trips_screen.dart';
 import 'edit_profile_screen.dart';
 import 'legal_screen.dart';
 import 'place_search_screen.dart';
+import 'safety_center_screen.dart';
 import 'splash_gate.dart';
 import 'support_home_screen.dart';
 
@@ -64,6 +65,7 @@ class AccountScreen extends StatelessWidget {
             item(Icons.home, 'عنوان المنزل', () => _setPlace(context, uid, 'home'), sub: asMap(places['home'])['address']?.toString()),
             item(Icons.work, 'عنوان العمل', () => _setPlace(context, uid, 'work'), sub: asMap(places['work'])['address']?.toString()),
             item(Icons.event_repeat, 'الرحلات اليومية', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyTripsScreen()))),
+            item(Icons.health_and_safety_outlined, 'مركز السلامة', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SafetyCenterScreen()))),
             item(Icons.support_agent, 'المساعدة والدعم', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportHomeScreen(role: 'rider')))),
             item(Icons.description_outlined, 'الشروط والخصوصية', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen()))),
             ListTile(

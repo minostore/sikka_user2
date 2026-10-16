@@ -10,6 +10,7 @@ import '../core/theme.dart';
 import '../core/utils.dart';
 import '../models/ride.dart';
 import '../services/ride_service.dart';
+import 'safety_center_screen.dart';
 import '../services/routing_service.dart';
 import '../widgets/app_map.dart';
 import '../widgets/back_guard.dart';
@@ -537,6 +538,14 @@ class _TrackingViewState extends State<_TrackingView> {
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RideChatScreen(rideId: r.id))),
                 icon: const Icon(Icons.chat_bubble_outline), label: const Text('محادثة مع السائق'),
               )),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SafetyCenterScreen(rideId: r.id))),
+                icon: const Icon(Icons.health_and_safety_outlined),
+                label: const Text('مركز السلامة'),
+              ),
+            ),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
