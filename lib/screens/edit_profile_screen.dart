@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/theme.dart';
+import '../services/r2_upload_service.dart';
 import '../core/utils.dart';
 import '../widgets/common.dart';
 import '../widgets/phone_field.dart';
@@ -57,10 +57,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final x = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70, maxWidth: 800, maxHeight: 800);
       if (x == null) return;
       setState(() => _uploading = true);
-      final ref = FirebaseStorage.instance.ref('riderAvatars/$_uid/avatar.jpg');
-      await ref.putFile(File(x.path), SettableMetadata(contentType: 'image/jpeg'));
-      final url = '${await ref.getDownloadURL()}&t=${DateTime.now().millisecondsSinceEpoch}';
-      await FirebaseDatabase.instance.ref('users/$_uid/photoUrl').set(url);
+      final uploaded = await R2UploadService.uploadProfileImage(file: File(x.path), role: 'rider');
+      final url = '${uploaded['url']}${uploaded['url']!.contains('?') ? '&' : '?'}t=${DateTime.now().millisecondsSinceEpoch}';
+      await FirebaseDatabase.instance.ref('users/$_uid').update({'photoUrl': url, if (uploaded['path'] != null) 'photoPath': uploaded['path']});
       if (mounted) {
         setState(() => _photo = url);
         showSnack(context, 'تم تحديث الصورة');
