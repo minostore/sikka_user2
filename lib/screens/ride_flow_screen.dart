@@ -225,7 +225,11 @@ class _OffersViewState extends State<_OffersView> {
               Text(money(o.price), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
             ]),
             const SizedBox(height: 6),
-            Text('${o.vehicle} • يصل خلال ${o.etaMin} دقائق'),
+            Row(children: [
+              if (o.vehicleImage.startsWith('http'))
+                Padding(padding: const EdgeInsetsDirectional.only(end: 10), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(o.vehicleImage, width: 64, height: 44, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox(width: 64, height: 44)))),
+              Expanded(child: Text('${o.vehicle}${o.plate.isEmpty ? '' : '\nلوحة: ${o.plate}'}\nيصل خلال ${o.etaMin} دقائق')),
+            ]),
             if (o.note.isNotEmpty) Text(o.note, style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -514,15 +518,22 @@ class _TrackingViewState extends State<_TrackingView> {
             ),
             const Divider(),
             Row(children: [
-              const CircleAvatar(child: Icon(Icons.person)),
+              CircleAvatar(
+                radius: 26,
+                backgroundImage: (r.driverPhotoUrl ?? '').startsWith('http') ? NetworkImage(r.driverPhotoUrl!) : null,
+                child: (r.driverPhotoUrl ?? '').startsWith('http') ? null : const Icon(Icons.person),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(r.driverName ?? 'السائق', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('${r.vehicle ?? ''}  ★ ${r.driverRating.toStringAsFixed(1)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text('★ ${r.driverRating.toStringAsFixed(1)}  •  ${r.vehicle ?? ''}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  if ((r.plate ?? '').isNotEmpty || (r.vehicleColor ?? '').isNotEmpty)
+                    Text('${(r.vehicleColor ?? '').isEmpty ? '' : 'اللون: ${r.vehicleColor}   '}${(r.plate ?? '').isEmpty ? '' : 'اللوحة: ${r.plate}'}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                 ]),
               ),
+              if ((r.vehicleImage ?? '').startsWith('http'))
+                Padding(padding: const EdgeInsetsDirectional.only(end: 8), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(r.vehicleImage!, width: 64, height: 44, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox(width: 64, height: 44)))),
               Text(money(r.finalPrice),
                   style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
             ]),

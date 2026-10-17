@@ -19,8 +19,9 @@ class Offer {
   final int etaMin;
   final String note;
   final int createdAt;
+  final String plate, vehicleImage, vehicleColor;
   Offer(this.driverId, this.name, this.photoUrl, this.phone, this.rating, this.trips, this.vehicle,
-      this.price, this.etaMin, this.note, this.createdAt);
+      this.price, this.etaMin, this.note, this.createdAt, {this.plate = '', this.vehicleImage = '', this.vehicleColor = ''});
 
   factory Offer.fromMap(String id, Map<String, dynamic> m) => Offer(
         id,
@@ -34,6 +35,9 @@ class Offer {
         (m['etaMin'] as num?)?.toInt() ?? 0,
         (m['note'] ?? '').toString(),
         (m['createdAt'] as num?)?.toInt() ?? 0,
+        plate: (m['plate'] ?? '').toString(),
+        vehicleImage: (m['vehicleImage'] ?? '').toString(),
+        vehicleColor: (m['vehicleColor'] ?? '').toString(),
       );
 }
 
@@ -170,6 +174,10 @@ class RideService {
       ride['driverName'] = o.name;
       ride['driverPhone'] = o.phone;
       ride['vehicle'] = o.vehicle;
+      ride['plate'] = o.plate;
+      ride['driverPhotoUrl'] = o.photoUrl;
+      ride['vehicleImage'] = o.vehicleImage;
+      ride['vehicleColor'] = o.vehicleColor;
       ride['driverRating'] = o.rating;
       ride['agreedPrice'] = o.price;
       ride['status'] = 'accepted';
