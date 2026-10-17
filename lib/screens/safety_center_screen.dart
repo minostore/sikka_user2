@@ -27,6 +27,45 @@ class _SafetyCenterScreenState extends State<SafetyCenterScreen> {
   final _uid = FirebaseAuth.instance.currentUser!.uid;
   DatabaseReference get _contactsRef => FirebaseDatabase.instance.ref('users/$_uid/trustedContacts');
   bool _busy = false;
+  List<Map<String, dynamic>> _extraTools = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExtraTools();
+  }
+
+  /// أدوات سلامة إضافية تضيفها الإدارة من لوحة التحكم ← settings/safetyTools
+  Future<void> _loadExtraTools() async {
+    try {
+      final raw = (await FirebaseDatabase.instance.ref('settings/safetyTools').get()).value;
+      final list = <Map<String, dynamic>>[];
+      final vals = raw is Map ? raw.values.toList() : raw is List ? raw : const [];
+      for (final v in vals) {
+        if (v is Map && v['active'] != false && (v['title'] ?? '').toString().trim().isNotEmpty) list.add(Map<String, dynamic>.from(v));
+      }
+      list.sort((a, b) => ((a['order'] as num?) ?? 0).compareTo((b['order'] as num?) ?? 0));
+      if (mounted) setState(() => _extraTools = list);
+    } catch (_) {}
+  }
+
+  Future<void> _runExtraTool(Map<String, dynamic> t) async {
+    final phone = (t['phone'] ?? '').toString().trim();
+    if (phone.isNotEmpty) {
+      final ok = await launchUrl(Uri(scheme: 'tel', path: phone));
+      if (!ok && mounted) showSnack(context, 'تعذر فتح تطبيق الاتصال', error: true);
+      return;
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text((t['title'] ?? '').toString()),
+        content: Text((t['description'] ?? '').toString()),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('حسنًا'))],
+      ),
+    );
+  }
 
   Future<Position?> _position() async {
     try {
@@ -214,6 +253,8 @@ class _SafetyCenterScreenState extends State<SafetyCenterScreen> {
               _tool(Icons.share_location, const Color(0xFF1E6BFF), 'مشاركة الرحلة', 'أرسل بيانات رحلتك وموقعك لمن تثق بهم', () => _shareTrip(contacts)),
               _tool(Icons.local_police, AppColors.red, 'طلب الشرطة', 'اتصال سريع برقم ${AppConfig.emergencyNumber}', _callPolice),
               _tool(Icons.sos, const Color(0xFFD32F2F), 'بلاغ طوارئ للدعم', 'يرسل موقعك ورقم رحلتك لفريق الدعم فورًا', _sendSos),
+              for (final t in _extraTools)
+                _tool(Icons.health_and_safety_outlined, const Color(0xFF00897B), (t['title'] ?? '').toString(), (t['description'] ?? '').toString(), () => _runExtraTool(t)),
               const SizedBox(height: 14),
               Row(children: [
                 const Expanded(child: Text('جهات اتصال موثوقة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900))),

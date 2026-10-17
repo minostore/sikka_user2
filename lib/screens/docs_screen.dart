@@ -12,7 +12,7 @@ import '../widgets/common.dart';
 import 'auth_driver.dart';
 import 'splash_gate.dart';
 
-const _defaultUploadApi = 'https://sikka.mohamedmini2006.workers.dev'; // خدمة sikka-uploads على Cloudflare (يمكن تغييرها من لوحة التحكم > الإعدادات)
+const _defaultUploadApi = 'https://sikka-eg.online'; // خدمة sikka-uploads على Cloudflare (يمكن تغييرها من لوحة التحكم > الإعدادات)
 
 const docLabels = {
   'license': 'رخصة القيادة',

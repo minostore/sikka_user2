@@ -39,6 +39,10 @@ IconData _topicIcon(String id) {
       return Icons.health_and_safety_outlined;
     case 'about':
       return Icons.info_outline;
+    case 'messages':
+      return Icons.forum_outlined;
+    case 'lost':
+      return Icons.luggage_outlined;
     default:
       return Icons.help_outline;
   }
@@ -46,9 +50,14 @@ IconData _topicIcon(String id) {
 
 List<SupportTopic> _defaultTopics(String role) => role == 'driver'
     ? const [
-        SupportTopic('trips', 'الرحلات', 'استفسار أو مشكلة تخص رحلة أو أرباح.'),
-        SupportTopic('profile', 'تعديل بياناتي', 'تعديل الملف الشخصي أو بيانات المركبة.'),
-        SupportTopic('other', 'أخرى', 'أي موضوع آخر.'),
+        SupportTopic('trips', 'الرحلات والأرباح', 'استفسار أو مشكلة تخص رحلة أو أرباح.'),
+        SupportTopic('fare', 'راجع أجرة رحلتي', 'اعتراض أو استفسار عن أجرة رحلة محددة.'),
+        SupportTopic('lost', 'الأغراض المفقودة', 'عميل ينسى غرضًا في سيارتك؟ بلّغنا للتنسيق.'),
+        SupportTopic('payment', 'المحفظة والدفع', 'شحن الرصيد، العمولة أو مشاكل الدفع.'),
+        SupportTopic('account', 'الحساب والمستندات', 'تعديل الملف الشخصي أو المستندات وبيانات المركبة.'),
+        SupportTopic('safety', 'السلامة والطوارئ', 'بلاغ أو مشكلة تخص سلامتك أثناء الرحلة.'),
+        SupportTopic('about', 'عن سكة وتطبيقها', 'كيف يعمل التطبيق والأسئلة العامة.'),
+        SupportTopic('messages', 'سجل الرسائل', 'مراجعة رسائلك ومحادثاتك مع الدعم.'),
       ]
     : const [
         SupportTopic('lost', 'الأغراض المفقودة', 'نسيت شيئًا في السيارة؟ بلّغنا وسنتواصل مع السائق.'),
@@ -58,6 +67,7 @@ List<SupportTopic> _defaultTopics(String role) => role == 'driver'
         SupportTopic('account', 'الحساب', 'تعديل البيانات أو مشاكل تسجيل الدخول.'),
         SupportTopic('safety', 'السلامة والطوارئ', 'أدوات السلامة، جهات الاتصال الموثوقة وبلاغات الطوارئ.'),
         SupportTopic('about', 'عن سكة وتطبيقها', 'كيف يعمل التطبيق والأسئلة العامة.'),
+        SupportTopic('messages', 'سجل الرسائل', 'مراجعة رسائلك ومحادثاتك مع الدعم والسائقين.'),
       ];
 
 /// صفحة «المساعدة والدعم» كاملة: اختر سبب التواصل ثم اكتب رسالتك.

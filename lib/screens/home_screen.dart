@@ -15,7 +15,6 @@ import '../services/location_service.dart';
 import '../widgets/app_map.dart';
 import '../widgets/common.dart';
 import '../widgets/markers.dart';
-import '../widgets/app_update_banner.dart';
 import 'notifications_screen.dart';
 import 'support_tickets_screen.dart';
 import 'ride_flow_screen.dart';
@@ -163,10 +162,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: AppUpdateBanner(role: 'rider'),
           ),
           Expanded(
             child: Padding(

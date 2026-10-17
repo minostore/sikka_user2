@@ -4,12 +4,13 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:http/http.dart' as http;
+import '../core/config.dart';
 
 /// Uploads profile images to the existing Sikka Cloudflare Worker/R2 service.
 /// The Worker must allow the `profile` upload key for any authenticated account
 /// and return a public or Worker-served HTTPS URL in `url`, `publicUrl`, or `downloadUrl`.
 class R2UploadService {
-  static const _defaultBase = 'https://sikka.mohamedmini2006.workers.dev';
+  static const _defaultBase = 'https://sikka-eg.online';
 
   static Future<Map<String, String>> uploadProfileImage({
     required File file,
@@ -32,6 +33,22 @@ class R2UploadService {
     if (bytes.length > 8 * 1024 * 1024) {
       throw Exception('حجم الصورة أكبر من 8 ميجابايت. اختر صورة أصغر.');
     }
+    // الطريقة الأساسية: رابط موقّع من خادم لوحة التحكم (الدومين الرسمي) ثم رفع مباشر إلى R2.
+    try {
+      final r = await http
+          .post(Uri.parse('${AppConfig.adminApiBase}/api/user/profile-upload-url'),
+              headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+              body: jsonEncode({'size': bytes.length}))
+          .timeout(const Duration(seconds: 20));
+      if (r.statusCode == 200) {
+        final j = Map<String, dynamic>.from(jsonDecode(r.body) as Map);
+        final up = (j['url'] ?? '').toString(), pub = (j['publicUrl'] ?? '').toString();
+        if (up.startsWith('https://') && pub.startsWith('https://')) {
+          final put = await http.put(Uri.parse(up), headers: {'Content-Type': 'image/jpeg'}, body: bytes).timeout(const Duration(seconds: 90));
+          if (put.statusCode >= 200 && put.statusCode < 300) return {'url': pub, 'path': (j['key'] ?? '').toString()};
+        }
+      }
+    } catch (_) {}
     // The Worker derives the authenticated UID from the Firebase token; the
     // role-specific metadata is kept in the database, not trusted from the client.
     final uri = Uri.parse('$base/upload/profile');

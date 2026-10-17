@@ -14,6 +14,7 @@ import 'safety_center_screen.dart';
 import '../services/routing_service.dart';
 import '../widgets/app_map.dart';
 import '../widgets/back_guard.dart';
+import '../widgets/belongings_notice.dart';
 import '../widgets/common.dart';
 import '../widgets/map_utils.dart';
 import '../widgets/markers.dart';
@@ -41,7 +42,7 @@ class RideFlowScreen extends StatelessWidget {
                 onPopInvokedWithResult: (didPop, _) {
                   if (didPop) RideService.clearActive().catchError((_) {});
                 },
-                child: Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: _RatingView(ride: ride)),
+                child: Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: Column(children: [BelongingsNotice(rideId: ride.id), Expanded(child: _RatingView(ride: ride))])),
               );
             case 'cancelled':
               return Scaffold(appBar: AppBar(title: const Text('رحلتك')), body: _CancelledView(ride: ride));
