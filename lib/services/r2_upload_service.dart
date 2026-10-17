@@ -10,7 +10,7 @@ import '../core/config.dart';
 /// The Worker must allow the `profile` upload key for any authenticated account
 /// and return a public or Worker-served HTTPS URL in `url`, `publicUrl`, or `downloadUrl`.
 class R2UploadService {
-  static const _defaultBase = 'https://sikka-eg.online';
+  static const _defaultBase = 'https://www.sikka-eg.online';
 
   static Future<Map<String, String>> uploadProfileImage({
     required File file,

@@ -12,7 +12,7 @@ class AppConfig {
   static const countryCode = '+20';
   static const packageName = 'com.sikka.user';
   // الدومين الرسمي للوحة التحكم (رفع الصور والتحديثات)
-  static const adminApiBase = 'https://sikka-eg.online';
+  static const adminApiBase = 'https://www.sikka-eg.online';
   static const userAgent = 'MishwarApp/1.0 ($packageName)';
   // مصدر بلاطات OpenStreetMap. يجب الالتزام بسياسة الاستخدام وإظهار الإسناد.
   static const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
