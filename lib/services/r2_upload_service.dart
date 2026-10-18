@@ -39,7 +39,7 @@ class R2UploadService {
           .post(Uri.parse('${AppConfig.adminApiBase}/api/user/profile-upload-url'),
               headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
               body: jsonEncode({'size': bytes.length}))
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 60));
       if (r.statusCode != 200) {
         var msg = 'HTTP ${r.statusCode}';
         try { msg = (jsonDecode(r.body) as Map)['error']?.toString() ?? msg; } catch (_) {}
@@ -49,7 +49,7 @@ class R2UploadService {
         final j = Map<String, dynamic>.from(jsonDecode(r.body) as Map);
         final up = (j['url'] ?? '').toString(), pub = (j['publicUrl'] ?? '').toString();
         if (up.startsWith('https://') && pub.startsWith('https://')) {
-          final put = await http.put(Uri.parse(up), headers: {'Content-Type': 'image/jpeg'}, body: bytes).timeout(const Duration(seconds: 90));
+          final put = await http.put(Uri.parse(up), headers: {'Content-Type': 'image/jpeg'}, body: bytes).timeout(const Duration(minutes: 10));
           if (put.statusCode >= 200 && put.statusCode < 300) return {'url': pub, 'path': (j['key'] ?? '').toString()};
           throw Exception('فشل الرفع إلى التخزين (HTTP ${put.statusCode}). تحقق من إعدادات R2 وCORS.');
         }
